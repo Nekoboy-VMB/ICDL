@@ -56,18 +56,16 @@
             position: relative;
             overflow: hidden;
         }
-        /* CSS TẠO VIỀN XANH KHI QUÉT QR THÀNH CÔNG (Sử dụng biến --qrbox-color) */
+        /* CSS TẠO VIỀN XANH KHI QUÉT QR THÀNH CÔNG */
         :root {
-            --qrbox-color: white; /* Màu viền mặc định */
+            --qrbox-color: white;
         }
-        
         #reader__scan_region {
             border: 4px solid var(--qrbox-color) !important;
             box-sizing: border-box;
             border-radius: 5px;
             transition: border-color 0.3s ease-in-out;
         }
-
         .form-group {
             margin-bottom: 15px;
         }
@@ -158,10 +156,9 @@
     const scanBtn = document.getElementById("btn-scan");
     const readerDiv = document.getElementById("reader");
 
-    // Hàm rung nhẹ điện thoại khi quét thành công (trên Android)
     function triggerVibration() {
         if ("vibrate" in navigator) {
-            navigator.vibrate(100); // Rung 100ms
+            navigator.vibrate(100);
         }
     }
 
@@ -169,29 +166,25 @@
         readerDiv.style.display = "block";
         scanBtn.style.display = "none";
 
-        // Cấu hình tối ưu: Zoom x2, Khung quét 300x300, FPS 30
         const qrConfig = { 
-            fps: 30,
-            qrbox: { width: 300, height: 300 },
+            fps: 25,
+            qrbox: { width: 250, height: 250 },
             aspectRatio: 1.0
         };
 
-        // Cấu hình camera: Zoom x2, Lấy nét liên tục, Ưu tiên camera sau
+        // Chỉ dùng camera sau và lấy nét liên tục an toàn cho mọi điện thoại
         const cameraConfig = { 
             facingMode: "environment",
-            advanced: [
-                { focusMode: "continuous" },
-                { zoom: 2.0 } // Yêu cầu zoom camera lên 2.0x
-            ]
+            advanced: [{ focusMode: "continuous" }]
         };
 
         html5QrCode.start(
             cameraConfig, 
             qrConfig,
             (decodedText, decodedResult) => {
-                // 1. Hiệu ứng thị giác: Đổi màu viền sang XANH LÁ
-                document.documentElement.style.setProperty('--qrbox-color', '#28a745'); // Màu xanh thành công
-                triggerVibration(); // Rung nhẹ báo hiệu
+                // Đổi màu viền sang xanh lá khi quét thành công
+                document.documentElement.style.setProperty('--qrbox-color', '#28a745');
+                triggerVibration();
 
                 console.log("Dữ liệu QR CCCD thô: ", decodedText);
                 const parts = decodedText.split("|");
@@ -207,14 +200,10 @@
                     document.getElementById("gender").value = parts[4];
                     document.getElementById("address").value = parts[5];
                     
-                    // Thông báo cho người dùng (có thể thay bằng alert hoặc log console)
-                    console.log("Quét mã QR thành công!");
-
-                    // 2. Dừng camera và reset màu viền sau khi quét thành công
                     setTimeout(() => {
                         stopScanner();
-                        document.documentElement.style.setProperty('--qrbox-color', 'white'); // Reset màu viền
-                    }, 500); // Đợi 0.5s để người dùng thấy hiệu ứng viền xanh
+                        document.documentElement.style.setProperty('--qrbox-color', 'white');
+                    }, 500);
 
                 } else {
                     alert("Mã QR không đúng chuẩn định dạng CCCD gắn chip!");
@@ -222,14 +211,39 @@
                 }
             },
             (errorMessage) => {
-                // Bỏ qua lỗi khung hình trống, đồng thời reset màu viền về trắng nếu không quét được
                 if (document.documentElement.style.getPropertyValue('--qrbox-color') !== 'white') {
                      document.documentElement.style.setProperty('--qrbox-color', 'white');
                 }
             }
         ).catch(err => {
-             alert("Không thể khởi động camera. Vui lòng cấp quyền truy cập camera!");
-             stopScanner();
+            // Trường hợp máy không hỗ trợ advanced focusMode, tự động fallback về cấu hình cơ bản nhất
+            html5QrCode.start(
+                { facingMode: "environment" },
+                qrConfig,
+                (decodedText) => {
+                    document.documentElement.style.setProperty('--qrbox-color', '#28a745');
+                    triggerVibration();
+                    const parts = decodedText.split("|");
+                    if (parts.length >= 6) {
+                        document.getElementById("cccd").value = parts[0];
+                        document.getElementById("fullname").value = parts[2];
+                        let rawDob = parts[3];
+                        if (rawDob.length === 8) {
+                            document.getElementById("dob").value = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
+                        }
+                        document.getElementById("gender").value = parts[4];
+                        document.getElementById("address").value = parts[5];
+                    }
+                    setTimeout(() => {
+                        stopScanner();
+                        document.documentElement.style.setProperty('--qrbox-color', 'white');
+                    }, 500);
+                },
+                (err2) => {}
+            ).catch(fallbackErr => {
+                alert("Không thể khởi động camera. Vui lòng kiểm tra lại quyền cấp phép trên trình duyệt!");
+                stopScanner();
+            });
         });
     });
 

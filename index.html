@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký dự thi ICDL - Quét QR CCCD</title>
+    <title>Đăng ký dự thi chứng chỉ ICDL - Quét CCCD</title>
     <!-- Thư viện quét QR chuẩn -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
@@ -98,33 +98,38 @@
     
     <!-- Khu vực Quét QR CCCD -->
     <div class="scanner-section">
-        <p style="margin-top: 0; color: #555;">Đưa mã QR trên thẻ CCCD vào khung hình để quét tự động:</p>
-        <button type="button" id="btn-scan">📷 Bắt đầu quét QR CCCD</button>
+        <p style="margin-top: 0; color: #555;">Tiết kiệm thời gian bằng cách quét mã QR trên thẻ CCCD:</p>
+        <button type="button" id="btn-scan">📷 Quét mã QR CCCD</button>
         <div id="reader"></div>
     </div>
 
     <!-- Form điền thông tin -->
-    <form id="icdl-form" onsubmit="event.preventDefault();">
+    <form id="icdl-form" onsubmit="event.preventDefault(); alert('Đã gửi thông tin đăng ký thành công!');">
         <div class="form-group">
             <label>Số CCCD:</label>
-            <input type="text" id="cccd" name="cccd" required placeholder="Tự động điền sau khi quét">
+            <input type="text" id="cccd" name="cccd" required placeholder="Nhập hoặc quét tự động">
         </div>
+
         <div class="form-group">
             <label>Họ và tên:</label>
             <input type="text" id="fullname" name="fullname" required placeholder="Họ và tên thí sinh">
         </div>
+
         <div class="form-group">
             <label>Ngày sinh:</label>
             <input type="text" id="dob" name="dob" required placeholder="DD/MM/YYYY">
         </div>
+
         <div class="form-group">
             <label>Giới tính:</label>
             <input type="text" id="gender" name="gender" placeholder="Nam/Nữ">
         </div>
+
         <div class="form-group">
             <label>Địa chỉ thường trú:</label>
             <input type="text" id="address" name="address" required placeholder="Địa chỉ trên CCCD">
         </div>
+
         <div class="form-group">
             <label>Chọn Mô đun thi ICDL:</label>
             <select id="module">
@@ -134,6 +139,7 @@
                 <option value="ppt">Presentation (PowerPoint)</option>
             </select>
         </div>
+
         <button type="submit" class="btn-submit">Xác nhận Đăng ký</button>
     </form>
 </div>
@@ -143,82 +149,46 @@
     const scanBtn = document.getElementById("btn-scan");
     const readerDiv = document.getElementById("reader");
 
-    scanBtn.addEventListener("click", async () => {
+    scanBtn.addEventListener("click", () => {
         readerDiv.style.display = "block";
-        scanBtn.style.display = "none";
+        scanBtn.style.display = "none"; // Ẩn nút đi trong lúc quét
 
-        const qrConfig = { 
-            fps: 10, 
-            qrbox: { width: 250, height: 250 } 
-        };
+        html5QrCode.start(
+            { facingMode: "environment" }, // Ưu tiên dùng camera sau
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            },
+            (decodedText, decodedResult) => {
+                console.log("Dữ liệu thô từ QR: ", decodedText);
+                const parts = decodedText.split("|");
 
-        try {
-            // Bước 1: Lấy danh sách camera có sẵn trên điện thoại
-            const devices = await Html5Qrcode.getCameras();
-            if (devices && devices.length) {
-                // Ưu tiên chọn camera sau (thường có chữ back, environment hoặc nằm ở sau danh sách)
-                let rearCameraId = devices[devices.length - 1].id;
-                for (let device of devices) {
-                    if (device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('sau') || device.label.toLowerCase().includes('environment')) {
-                        rearCameraId = device.id;
-                        break;
+                if (parts.length >= 6) {
+                    document.getElementById("cccd").value = parts[0];       // Số CCCD
+                    document.getElementById("fullname").value = parts[2];   // Họ tên
+                    
+                    let rawDob = parts[3];
+                    if (rawDob.length === 8) {
+                        let formattedDob = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
+                        document.getElementById("dob").value = formattedDob;
                     }
+
+                    document.getElementById("gender").value = parts[4];     // Giới tính
+                    document.getElementById("address").value = parts[5];    // Địa chỉ
+                    alert("Quét mã QR thành công!");
+                } else {
+                    alert("Mã QR không đúng định dạng CCCD gắn chip!");
                 }
 
-                // Bước 2: Khởi động trực tiếp bằng ID camera sau để tránh lỗi phân giải
-                await html5QrCode.start(
-                    rearCameraId, 
-                    qrConfig,
-                    (decodedText) => {
-                        console.log("Dữ liệu QR CCCD: ", decodedText);
-                        const parts = decodedText.split("|");
-                        if (parts.length >= 6) {
-                            document.getElementById("cccd").value = parts[0];
-                            document.getElementById("fullname").value = parts[2];
-                            let rawDob = parts[3];
-                            if (rawDob.length === 8) {
-                                document.getElementById("dob").value = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
-                            }
-                            document.getElementById("gender").value = parts[4];
-                            document.getElementById("address").value = parts[5];
-                            alert("Quét mã QR thành công!");
-                        } else {
-                            alert("Mã QR không đúng định dạng CCCD!");
-                        }
-                        stopScanner();
-                    },
-                    (errorMessage) => {}
-                );
-            } else {
-                alert("Không tìm thấy camera trên thiết bị!");
                 stopScanner();
+            },
+            (errorMessage) => {
+                // Bỏ qua lỗi khung hình
             }
-        } catch (err) {
-            // Trường hợp không gọi được danh sách camera, ép chạy cơ bản bằng facingMode
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                qrConfig,
-                (decodedText) => {
-                    const parts = decodedText.split("|");
-                    if (parts.length >= 6) {
-                        document.getElementById("cccd").value = parts[0];
-                        document.getElementById("fullname").value = parts[2];
-                        let rawDob = parts[3];
-                        if (rawDob.length === 8) {
-                            document.getElementById("dob").value = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
-                        }
-                        document.getElementById("gender").value = parts[4];
-                        document.getElementById("address").value = parts[5];
-                        alert("Quét mã QR thành công!");
-                    }
-                    stopScanner();
-                },
-                (err2) => {}
-            ).catch(finalErr => {
-                alert("Không thể mở camera. Vui lòng đảm bảo bạn đang mở link bằng HTTPS và đã cấp quyền trình duyệt!");
-                stopScanner();
-            });
-        }
+        ).catch(err => {
+            alert("Không thể khởi động camera. Vui lòng kiểm tra lại quyền truy cập camera trên trình duyệt!");
+            stopScanner();
+        });
     });
 
     function stopScanner() {

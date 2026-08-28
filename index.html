@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký dự thi chứng chỉ ICDL - Quét CCCD</title>
+    <title>Đăng ký dự thi chứng chỉ ICDL - Quét QR CCCD</title>
     <!-- Thư viện quét QR chuẩn -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
@@ -98,8 +98,8 @@
     
     <!-- Khu vực Quét QR CCCD -->
     <div class="scanner-section">
-        <p style="margin-top: 0; color: #555;">Tiết kiệm thời gian bằng cách quét mã QR trên thẻ CCCD:</p>
-        <button type="button" id="btn-scan">📷 Quét mã QR CCCD</button>
+        <p style="margin-top: 0; color: #555;">Đưa mã QR trên thẻ CCCD vào khung hình để quét tự động:</p>
+        <button type="button" id="btn-scan">📷 Bắt đầu quét QR CCCD</button>
         <div id="reader"></div>
     </div>
 
@@ -107,7 +107,7 @@
     <form id="icdl-form" onsubmit="event.preventDefault(); alert('Đã gửi thông tin đăng ký thành công!');">
         <div class="form-group">
             <label>Số CCCD:</label>
-            <input type="text" id="cccd" name="cccd" required placeholder="Nhập hoặc quét tự động">
+            <input type="text" id="cccd" name="cccd" required placeholder="Tự động điền sau khi quét">
         </div>
 
         <div class="form-group">
@@ -151,24 +151,33 @@
 
     scanBtn.addEventListener("click", () => {
         readerDiv.style.display = "block";
-        scanBtn.style.display = "none"; // Ẩn nút đi trong lúc quét để tránh bấm nhiều lần
+        scanBtn.style.display = "none"; // Ẩn nút đi trong lúc quét
+
+        // Cấu hình tối ưu tốc độ và khung hình bắt mã QR CCCD
+        const qrConfig = { 
+            fps: 20,                          // Tăng số khung hình/giây để bắt nét nhạy hơn
+            qrbox: { width: 280, height: 280 } // Kích thước khung quét vừa vặn
+        };
+
+        // Ưu tiên camera sau và kích hoạt tính năng lấy nét liên tục nếu thiết bị hỗ trợ
+        const cameraConfig = { 
+            facingMode: "environment",
+            advanced: [{ focusMode: "continuous" }]
+        };
 
         html5QrCode.start(
-            { facingMode: "environment" }, // Ưu tiên dùng camera sau trên điện thoại
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 }
-            },
+            cameraConfig, 
+            qrConfig,
             (decodedText, decodedResult) => {
-                // Khi quét thành công mã QR trên CCCD, dữ liệu chuẩn có cấu trúc phân tách bằng dấu |
-                console.log("Dữ liệu thô từ QR: ", decodedText);
+                console.log("Dữ liệu QR CCCD thô: ", decodedText);
                 const parts = decodedText.split("|");
 
+                // Mã QR CCCD chuẩn của Bộ Công an có tối thiểu 6 phần tử phân tách bằng dấu |
                 if (parts.length >= 6) {
                     document.getElementById("cccd").value = parts[0];       // Số CCCD
                     document.getElementById("fullname").value = parts[2];   // Họ tên
                     
-                    // Xử lý chuyển đổi ngày sinh từ dạng ddmmyyyy (VD: 15082000) sang dd/mm/yyyy
+                    // Chuyển đổi định dạng ngày sinh ddmmyyyy thành dd/mm/yyyy
                     let rawDob = parts[3];
                     if (rawDob.length === 8) {
                         let formattedDob = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
@@ -177,19 +186,42 @@
 
                     document.getElementById("gender").value = parts[4];     // Giới tính
                     document.getElementById("address").value = parts[5];    // Địa chỉ
+                    
+                    alert("Quét mã QR thành công!");
                 } else {
-                    alert("Mã QR không đúng định dạng CCCD gắn chip của Bộ Công an!");
+                    alert("Mã QR quét được không đúng chuẩn định dạng CCCD gắn chip!");
                 }
 
-                // Dừng camera và ẩn khung quét sau khi quét xong
+                // Dừng camera và ẩn khung quét sau khi quét thành công
                 stopScanner();
             },
             (errorMessage) => {
-                // Lỗi trong quá trình quét khung hình (bỏ qua để tiếp tục tìm mã QR)
+                // Bỏ qua lỗi khung hình trống trong quá trình tìm mã QR
             }
         ).catch(err => {
-            alert("Không thể khởi động camera. Vui lòng kiểm tra lại quyền truy cập camera trên trình duyệt!");
-            stopScanner();
+            // Dự phòng: Nếu thiết bị không nhận cấu hình lấy nét nâng cao, chạy cấu hình mặc định
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                qrConfig, 
+                (decodedText) => {
+                    const parts = decodedText.split("|");
+                    if (parts.length >= 6) {
+                        document.getElementById("cccd").value = parts[0];
+                        document.getElementById("fullname").value = parts[2];
+                        let rawDob = parts[3];
+                        if (rawDob.length === 8) {
+                            document.getElementById("dob").value = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
+                        }
+                        document.getElementById("gender").value = parts[4];
+                        document.getElementById("address").value = parts[5];
+                        alert("Quét mã QR thành công!");
+                    }
+                    stopScanner();
+                }
+            ).catch(fallbackErr => {
+                alert("Không thể khởi động camera. Vui lòng kiểm tra lại quyền cấp phép trên trình duyệt!");
+                stopScanner();
+            });
         });
     });
 

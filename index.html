@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký ICDL - Quét CCCD chuẩn xác</title>
+    <title>Đăng ký dự thi chứng chỉ ICDL - Xác thực CCCD</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #0056b3; margin-bottom: 25px; }
-        .scanner-section { text-align: center; margin-bottom: 25px; padding: 15px; background: #eef2f7; border-radius: 8px; }
-        .btn-action { background-color: #28a745; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        video { width: 100%; max-width: 400px; border-radius: 5px; display: none; margin-top: 15px; }
+        h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
+        .instruction-box { background: #e8f4fd; border-left: 4px solid #0056b3; padding: 12px; margin-bottom: 20px; font-size: 14px; color: #333; line-height: 1.5; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; box-sizing: border-box; }
-        .btn-submit { background-color: #0056b3; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        textarea { resize: vertical; }
+        input:focus, textarea:focus { border-color: #0056b3; outline: none; }
+        .btn-submit { background-color: #28a745; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -22,133 +22,89 @@
 <div class="container">
     <h2>ĐĂNG KÝ DỰ THI CHỨNG CHỈ ICDL</h2>
     
-    <div class="scanner-section">
-        <button type="button" id="btn-scan" class="btn-action">📷 Mở Camera quét mã CCCD</button>
-        <!-- Thẻ video để chạy luồng camera gốc -->
-        <video id="video" autoplay playsinline></video>
+    <!-- Hướng dẫn thông minh vượt rào cản iOS -->
+    <div class="instruction-box">
+        <strong>💡 Hướng dẫn xác thực nhanh:</strong><br>
+        Do Safari trên iPhone chặn camera web quét mã CCCD, bạn hãy dùng app <b>Zalo</b> quét mã QR CCCD, sao chép đoạn thông tin hoặc dán chuỗi QR thô vào ô bên dưới để tự động điền chính xác tuyệt đối!
     </div>
 
-    <form id="icdl-form" onsubmit="event.preventDefault(); alert('Đăng ký thành công!');">
+    <form id="icdl-form" onsubmit="event.preventDefault(); alert('Đăng ký thông tin thành công!');">
+        
         <div class="form-group">
-            <label style="color: #d9534f;">Chuỗi QR Thô:</label>
-            <textarea id="raw-qr" rows="2" placeholder="Dữ liệu thô sẽ hiện ở đây..."></textarea>
+            <label style="color: #0056b3;">Dán chuỗi QR thô (Hoặc quét qua Zalo rồi dán vào đây):</label>
+            <textarea id="raw-qr" rows="3" placeholder="Dán chuỗi dữ liệu ngăn cách bởi dấu | vào đây để hệ thống tự điền..." oninput="parseQRCode(this.value)"></textarea>
         </div>
+
         <div class="form-group">
             <label>Số CCCD:</label>
-            <input type="text" id="cccd" required placeholder="Số CCCD">
+            <input type="text" id="cccd" name="cccd" required placeholder="Tự động điền...">
         </div>
+
         <div class="form-group">
             <label>Họ và tên:</label>
-            <input type="text" id="fullname" required placeholder="Họ và tên">
+            <input type="text" id="fullname" name="fullname" required placeholder="Tự động điền...">
         </div>
+
         <div class="form-group">
             <label>Ngày sinh:</label>
-            <input type="text" id="dob" required placeholder="DD/MM/YYYY">
+            <input type="text" id="dob" name="dob" required placeholder="DD/MM/YYYY">
         </div>
+
         <div class="form-group">
             <label>Giới tính:</label>
-            <input type="text" id="gender" placeholder="Nam/Nữ">
+            <input type="text" id="gender" name="gender" placeholder="Nam/Nữ">
         </div>
+
         <div class="form-group">
             <label>Địa chỉ thường trú:</label>
-            <input type="text" id="address" required placeholder="Địa chỉ">
+            <input type="text" id="address" name="address" required placeholder="Tự động điền...">
         </div>
-        <button type="submit" class="btn-submit">Xác nhận Đăng ký</button>
+
+        <div class="form-group">
+            <label>Chọn Mô đun thi ICDL:</label>
+            <select id="module">
+                <option value="icdl_base">ICDL Base (Các mô đun cơ bản)</option>
+                <option value="word">Computer & Word Processing</option>
+                <option value="excel">Spreadsheets (Excel)</option>
+                <option value="ppt">Presentation (PowerPoint)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-submit">Xác nhận Đăng ký Dự thi</button>
     </form>
 </div>
 
 <script>
-    const video = document.getElementById('video');
-    const scanBtn = document.getElementById('btn-scan');
-    let mediaStream = null;
-    let scanning = false;
-
-    scanBtn.addEventListener('click', async () => {
-        if (!scanning) {
-            try {
-                // Ép mở camera sau với độ phân giải cao để nhìn rõ mã QR li ti
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: "environment" } }
-                });
-            } catch (err) {
-                // Fallback nếu máy không nhận exact environment
-                try {
-                    mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                } catch (e) {
-                    alert("Không thể mở camera. Vui lòng cấp quyền camera cho trình duyệt!");
-                    return;
-                }
-            }
-
-            video.srcObject = mediaStream;
-            video.style.display = 'block';
-            scanBtn.innerText = "⏹️ Dừng quét";
-            scanning = true;
-            requestAnimationFrame(scanQRCode);
-        } else {
-            stopScan();
-        }
-    });
-
-    function stopScan() {
-        if (mediaStream) {
-            mediaStream.getTracks().forEach(track => track.stop());
-        }
-        video.style.display = 'none';
-        scanBtn.innerText = "📷 Mở Camera quét mã CCCD";
-        scanning = false;
-    }
-
-    async function scanQRCode() {
-        if (!scanning) return;
-
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            // Kiểm tra xem trình duyệt có hỗ trợ BarcodeDetector gốc không
-            if ('BarcodeDetector' in window) {
-                try {
-                    const barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-                    const results = await barcodeDetector.detect(video);
-                    if (results.length > 0) {
-                        const rawText = results[0].rawValue;
-                        processData(rawText);
-                        stopScan();
-                        return;
-                    }
-                } catch (err) {
-                    console.error("Lỗi quét ngầm:", err);
-                }
-            } else {
-                alert("Trình duyệt của bạn không hỗ trợ BarcodeDetector gốc. Hãy dùng Chrome trên Android hoặc Safari mới nhất.");
-                stopScan();
-                return;
-            }
-        }
-        requestAnimationFrame(scanQRCode);
-    }
-
-    function processData(decodedText) {
-        document.getElementById("raw-qr").value = decodedText;
-        const parts = decodedText.split("|");
+    // Hàm tự động bóc tách thông tin chuẩn xác từ chuỗi QR CCCD
+    function parseQRCode(decodedText) {
+        const parts = decodedText.trim().split("|");
         if (parts.length >= 4) {
             document.getElementById("cccd").value = parts[0] || "";       
             
-            let nameIndex = 2, dobIndex = 3, genderIndex = 4, addressIndex = 5;
+            let nameIndex = 2;
+            let dobIndex = 3;
+            let genderIndex = 4;
+            let addressIndex = 5;
+
+            // Kiểm tra nếu phần tử [1] là số CMND cũ (9 chữ số)
             if (parts[1] && /^\d{9}$/.test(parts[1])) {
-                nameIndex = 3; dobIndex = 4; genderIndex = 5; addressIndex = 6;
+                nameIndex = 3;
+                dobIndex = 4;
+                genderIndex = 5;
+                addressIndex = 6;
             }
 
             document.getElementById("fullname").value = parts[nameIndex] || "";   
+            
             let rawDob = parts[dobIndex] || "";
             if (rawDob.length === 8) {
                 document.getElementById("dob").value = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
             } else {
                 document.getElementById("dob").value = rawDob;
             }
+
             document.getElementById("gender").value = parts[genderIndex] || "";     
             document.getElementById("address").value = parts[addressIndex] || "";    
-            alert("Đã tự động điền thông tin từ CCCD thành công!");
-        } else {
-            alert("Đã quét được mã nhưng không đúng định dạng CCCD Bộ Công an!");
         }
     }
 </script>

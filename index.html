@@ -151,10 +151,10 @@
 
     scanBtn.addEventListener("click", () => {
         readerDiv.style.display = "block";
-        scanBtn.style.display = "none"; // Ẩn nút đi trong lúc quét
+        scanBtn.style.display = "none"; 
 
         html5QrCode.start(
-            { facingMode: "environment" }, // Ưu tiên dùng camera sau
+            { facingMode: "environment" }, 
             {
                 fps: 10,
                 qrbox: { width: 250, height: 250 }
@@ -163,27 +163,30 @@
                 console.log("Dữ liệu thô từ QR: ", decodedText);
                 const parts = decodedText.split("|");
 
-                // HIỂN THỊ TRỰC TIẾP CHUỖI VỪA QUÉT ĐƯỢC RA MÀN HÌNH ĐỂ TEST
-                alert("Dữ liệu thô quét được: " + decodedText);
-
-                if (parts.length >= 6) {
-                    document.getElementById("cccd").value = parts[0];       
-                    document.getElementById("fullname").value = parts[2];   
-                    let rawDob = parts[3];
+                // Nới lỏng điều kiện kiểm tra độ dài chuỗi để bắt được dữ liệu CCCD thực tế
+                if (parts.length >= 4) {
+                    document.getElementById("cccd").value = parts[0] || "";       
+                    document.getElementById("fullname").value = parts[2] || "";   
+                    
+                    let rawDob = parts[3] || "";
                     if (rawDob.length === 8) {
-                        document.getElementById("dob").value = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
+                        let formattedDob = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
+                        document.getElementById("dob").value = formattedDob;
+                    } else {
+                        document.getElementById("dob").value = rawDob;
                     }
-                    document.getElementById("gender").value = parts[4];     
-                    document.getElementById("address").value = parts[5];    
+
+                    document.getElementById("gender").value = parts[4] || "";     
+                    document.getElementById("address").value = parts[5] || "";    
+                    alert("Quét mã QR thành công!");
                 } else {
-                    alert("Số phần tử phân tách chỉ có: " + parts.length);
+                    // Nếu chuỗi ngắn hoặc không theo định dạng chuẩn, hiển thị thông báo kèm dữ liệu để kiểm tra
+                    alert("Dữ liệu QR quét được: " + decodedText);
                 }
 
                 stopScanner();
             },
-            (errorMessage) => {
-                // Bỏ qua lỗi khung hình
-            }
+            (errorMessage) => {}
         ).catch(err => {
             alert("Không thể khởi động camera. Vui lòng kiểm tra lại quyền truy cập camera trên trình duyệt!");
             stopScanner();

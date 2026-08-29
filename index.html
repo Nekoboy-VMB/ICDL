@@ -1,8 +1,221 @@
-(decodedText) => {
-    // In thẳng toàn bộ chuỗi thô của QR ra ô input số CCCD hoặc một khung text để nhìn cho rõ
-    console.log("Chuỗi QR thô là: ", decodedText);
-    alert("Đã đọc được chuỗi: " + decodedText);
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký dự thi chứng chỉ ICDL - Quét CCCD</title>
+    <!-- Thư viện quét QR chuẩn -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 25px;
+        }
+        .scanner-section {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #eef2f7;
+            border-radius: 8px;
+        }
+        .btn-action {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            margin: 15px auto;
+            display: none;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus {
+            border-color: #0056b3;
+            outline: none;
+        }
+        .btn-submit {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ĐĂNG KÝ DỰ THI CHỨNG CHỈ ICDL</h2>
     
-    // Gán thử vào ô input cccd xem nó nhận cái gì
-    document.getElementById("cccd").value = decodedText; 
-}
+    <div class="scanner-section">
+        <p style="margin-top: 0; color: #333; font-weight: bold;">Kiểm tra chuỗi thô QR CCCD:</p>
+        <button type="button" id="btn-scan" class="btn-action">📷 Mở Camera quét</button>
+        <div id="reader"></div>
+    </div>
+
+    <form id="icdl-form" onsubmit="event.preventDefault(); alert('Đã gửi thông tin thành công!');">
+        <!-- Khung hiển thị chuỗi thô raw text trực tiếp để bạn nhìn thấy cấu trúc dữ liệu -->
+        <div class="form-group">
+            <label style="color: #d9534f;">Chuỗi QR Thô (Raw Text):</label>
+            <textarea id="raw-qr" rows="3" placeholder="Chuỗi ký tự thô sẽ hiện ở đây khi quét thành công..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Số CCCD:</label>
+            <input type="text" id="cccd" name="cccd" required placeholder="Số CCCD">
+        </div>
+
+        <div class="form-group">
+            <label>Họ và tên:</label>
+            <input type="text" id="fullname" name="fullname" required placeholder="Họ và tên">
+        </div>
+
+        <div class="form-group">
+            <label>Ngày sinh:</label>
+            <input type="text" id="dob" name="dob" required placeholder="DD/MM/YYYY">
+        </div>
+
+        <div class="form-group">
+            <label>Giới tính:</label>
+            <input type="text" id="gender" name="gender" placeholder="Nam/Nữ">
+        </div>
+
+        <div class="form-group">
+            <label>Địa chỉ thường trú:</label>
+            <input type="text" id="address" name="address" required placeholder="Địa chỉ">
+        </div>
+
+        <div class="form-group">
+            <label>Chọn Mô đun thi ICDL:</label>
+            <select id="module">
+                <option value="icdl_base">ICDL Base (Các mô đun cơ bản)</option>
+                <option value="word">Computer & Word Processing</option>
+                <option value="excel">Spreadsheets (Excel)</option>
+                <option value="ppt">Presentation (PowerPoint)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-submit">Xác nhận Đăng ký</button>
+    </form>
+</div>
+
+<script>
+    const html5QrCode = new Html5Qrcode("reader");
+    const scanBtn = document.getElementById("btn-scan");
+    const readerDiv = document.getElementById("reader");
+
+    let isScanning = false;
+    scanBtn.addEventListener("click", () => {
+        if (!isScanning) {
+            readerDiv.style.display = "block";
+            scanBtn.innerText = "⏹️ Đóng Camera";
+            isScanning = true;
+
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                { fps: 15, qrbox: { width: 280, height: 180 } },
+                (decodedText) => {
+                    // 1. In nguyên văn chuỗi thô ra ô textarea để bạn soi trực tiếp
+                    document.getElementById("raw-qr").value = decodedText;
+                    console.log("Chuỗi QR thô: ", decodedText);
+
+                    // 2. Tự động bóc tách vào các ô input bên dưới
+                    const parts = decodedText.split("|");
+                    if (parts.length >= 4) {
+                        document.getElementById("cccd").value = parts[0] || "";       
+                        
+                        let nameIndex = 2;
+                        let dobIndex = 3;
+                        let genderIndex = 4;
+                        let addressIndex = 5;
+
+                        if (parts[1] && /^\d{9}$/.test(parts[1])) {
+                            nameIndex = 3;
+                            dobIndex = 4;
+                            genderIndex = 5;
+                            addressIndex = 6;
+                        }
+
+                        document.getElementById("fullname").value = parts[nameIndex] || "";   
+                        
+                        let rawDob = parts[dobIndex] || "";
+                        if (rawDob.length === 8) {
+                            document.getElementById("dob").value = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
+                        } else {
+                            document.getElementById("dob").value = rawDob;
+                        }
+
+                        document.getElementById("gender").value = parts[genderIndex] || "";     
+                        document.getElementById("address").value = parts[addressIndex] || "";    
+                    }
+                    
+                    closeScanner();
+                },
+                (errorMessage) => {}
+            ).catch(err => {
+                alert("Không thể khởi động camera. Hãy kiểm tra quyền trình duyệt!");
+                closeScanner();
+            });
+        } else {
+            closeScanner();
+        }
+    });
+
+    function closeScanner() {
+        html5QrCode.stop().then(() => {
+            readerDiv.style.display = "none";
+            scanBtn.innerText = "📷 Mở Camera quét";
+            isScanning = false;
+        }).catch(err => {
+            readerDiv.style.display = "none";
+            scanBtn.innerText = "📷 Mở Camera quét";
+            isScanning = false;
+        });
+    }
+</script>
+
+</body>
+</html>

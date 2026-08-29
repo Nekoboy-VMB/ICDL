@@ -33,7 +33,7 @@
             background: #eef2f7;
             border-radius: 8px;
         }
-        #btn-scan {
+        .btn-action {
             background-color: #28a745;
             color: white;
             border: none;
@@ -42,9 +42,13 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
+            margin: 5px;
         }
-        #btn-scan:hover {
-            background-color: #218838;
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+        #btn-file {
+            background-color: #17a2b8;
         }
         #reader {
             width: 100%;
@@ -98,8 +102,13 @@
     
     <!-- Khu vực Quét QR CCCD -->
     <div class="scanner-section">
-        <p style="margin-top: 0; color: #555;">Tiết kiệm thời gian bằng cách quét mã QR trên thẻ CCCD:</p>
-        <button type="button" id="btn-scan">📷 Quét mã QR CCCD</button>
+        <p style="margin-top: 0; color: #555;">Chọn cách điền nhanh thông tin từ CCCD:</p>
+        <button type="button" id="btn-scan" class="btn-action">📷 Bật Camera quét QR</button>
+        
+        <!-- Thêm tính năng chọn ảnh có sẵn (cực kỳ hữu ích cho iPhone) -->
+        <input type="file" id="qr-input-file" accept="image/*" style="display: none;">
+        <button type="button" id="btn-file" class="btn-action" onclick="document.getElementById('qr-input-file').click();">📁 Tải ảnh chụp mã QR lên</button>
+
         <div id="reader"></div>
     </div>
 
@@ -149,61 +158,60 @@
     const scanBtn = document.getElementById("btn-scan");
     const readerDiv = document.getElementById("reader");
 
+    // Hàm xử lý dữ liệu chung khi quét được mã QR
+    function handleQRCodeData(decodedText) {
+        console.log("Dữ liệu thô từ QR: ", decodedText);
+        const parts = decodedText.split("|");
+
+        if (parts.length >= 4) {
+            document.getElementById("cccd").value = parts[0] || "";       
+            
+            let nameIndex = 2;
+            let dobIndex = 3;
+            let genderIndex = 4;
+            let addressIndex = 5;
+
+            if (parts[1] && /^\d{9}$/.test(parts[1])) {
+                nameIndex = 3;
+                dobIndex = 4;
+                genderIndex = 5;
+                addressIndex = 6;
+            }
+
+            document.getElementById("fullname").value = parts[nameIndex] || "";   
+            
+            let rawDob = parts[dobIndex] || "";
+            if (rawDob.length === 8) {
+                let formattedDob = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
+                document.getElementById("dob").value = formattedDob;
+            } else {
+                document.getElementById("dob").value = rawDob;
+            }
+
+            document.getElementById("gender").value = parts[genderIndex] || "";     
+            document.getElementById("address").value = parts[addressIndex] || "";    
+            
+            alert("Đã điền thông tin từ mã QR CCCD thành công!");
+        } else {
+            alert("Dữ liệu QR không đúng định dạng: " + decodedText);
+        }
+    }
+
+    // 1. Quét bằng camera
     scanBtn.addEventListener("click", () => {
         readerDiv.style.display = "block";
         scanBtn.style.display = "none"; 
 
         html5QrCode.start(
             { facingMode: "environment" }, 
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 }
-            },
-            (decodedText, decodedResult) => {
-                console.log("Dữ liệu thô từ QR: ", decodedText);
-                const parts = decodedText.split("|");
-
-                if (parts.length >= 4) {
-                    // Tự động gán trường số CCCD (luôn là phần tử đầu tiên)
-                    document.getElementById("cccd").value = parts[0] || "";       
-
-                    // Kiểm tra xem phần tử thứ 1 có phải là số CMND cũ không (thường là dãy số 9 chữ số)
-                    let nameIndex = 2;
-                    let dobIndex = 3;
-                    let genderIndex = 4;
-                    let addressIndex = 5;
-
-                    // Nếu phần tử thứ 1 là số (CMND cũ), dịch các mốc index lên 1 đơn vị
-                    if (parts[1] && /^\d{9}$/.test(parts[1])) {
-                        nameIndex = 3;
-                        dobIndex = 4;
-                        genderIndex = 5;
-                        addressIndex = 6;
-                    }
-
-                    document.getElementById("fullname").value = parts[nameIndex] || "";   
-                    
-                    let rawDob = parts[dobIndex] || "";
-                    if (rawDob.length === 8) {
-                        let formattedDob = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
-                        document.getElementById("dob").value = formattedDob;
-                    } else {
-                        document.getElementById("dob").value = rawDob;
-                    }
-
-                    document.getElementById("gender").value = parts[genderIndex] || "";     
-                    document.getElementById("address").value = parts[addressIndex] || "";    
-                    
-                    alert("Quét mã QR CCCD thành công!");
-                } else {
-                    alert("Dữ liệu QR: " + decodedText);
-                }
-
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+                handleQRCodeData(decodedText);
                 stopScanner();
             },
             (errorMessage) => {}
         ).catch(err => {
-            alert("Không thể khởi động camera. Vui lòng kiểm tra lại quyền truy cập camera trên trình duyệt!");
+            alert("Không mở được camera. Hãy cấp quyền hoặc dùng tính năng tải ảnh lên!");
             stopScanner();
         });
     });
@@ -213,9 +221,24 @@
             readerDiv.style.display = "none";
             scanBtn.style.display = "inline-block";
         }).catch(err => {
-            console.log("Lỗi tắt camera: ", err);
+            console.log(err);
         });
     }
+
+    // 2. Quét bằng cách chọn ảnh chụp màn hình mã QR (Cực kỳ nhạy trên iPhone)
+    const fileInput = document.getElementById('qr-input-file');
+    fileInput.addEventListener('change', e => {
+        if (e.target.files.length == 0) return;
+        const imageFile = e.target.files[0];
+        
+        html5QrCode.scanFile(imageFile, true)
+        .then(decodedText => {
+            handleQRCodeData(decodedText);
+        })
+        .catch(err => {
+            alert("Không đọc được mã QR từ ảnh này. Hãy chắc chắn ảnh chụp rõ mã QR trên thẻ CCCD!");
+        });
+    });
 </script>
 
 </body>

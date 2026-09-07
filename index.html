@@ -34,7 +34,19 @@ body {
         .tab-btn.active { background: #002d62; color: white; border-color: #002d62; }
         .section-content { display: none; }
         .section-content.active { display: block; }
-        #video-preview { width: 100%; max-height: 220px; background: #000; border-radius: 4px; margin-top: 8px; display: none; }
+        #video-preview {
+    display: none; /* Mặc định ẩn đi */
+    width: 260px !important;    /* Cố định chiều rộng thành hình vuông */
+    height: 260px !important;   /* Cố định chiều cao thành hình vuông */
+    object-fit: cover !important; /* Tránh bị méo hình ảnh camera */
+    border-radius: 12px;        /* Bo góc mềm mại, hiện đại */
+    border: 3px solid #007bff;  /* Viền xanh tạo khung quét nổi bật */
+    background: #000;
+    
+    /* Đưa ra giữa màn hình hoặc đặt gọn gàng ngay dưới nút bấm */
+    margin: 10px auto;
+    display: block; 
+}
 
         .input-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-family: Arial, sans-serif; }
         .form-group { display: flex; flex-direction: column; }
@@ -112,24 +124,13 @@ body {
                 <input type="file" id="qr-input" accept="image/*" style="margin-top: 5px;">
             </div>
 
-           <div id="tab-camera" class="section-content">
-    <!-- Nút bật camera sẽ kích hoạt khung quét hình vuông -->
-    <button onclick="startCamera()" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">📷 Quét QR Camera</button>
-    
-    <!-- Khung pop-up hình vuông quét mã QR (mặc định ẩn, bật lên sẽ nằm giữa màn hình) -->
-    <div id="reader-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-            <h3 style="margin-top: 0; font-size: 16px; color: #333;">Đưa mã QR vào khung hình</h3>
-            
-            <!-- Thẻ video giới hạn khung hình vuông nhỏ gọn (250x250px) -->
-            <video id="interactive" class="viewport" style="width: 250px; height: 250px; object-fit: cover; border-radius: 8px; background: #000;"></video>
-            
-            <div style="margin-top: 15px;">
-                <button type="button" id="btn-close-camera" onclick="stopCamera()" style="background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Đóng Camera</button>
+            <div id="tab-camera" class="section-content">
+                <button onclick="startCamera()" style="padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Bật Camera</button>
+                <button onclick="stopCamera()" style="padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Tắt Camera</button>
+                <br>
+                
+                <video id="video-preview" autoplay></video>
             </div>
-        </div>
-    </div>
-</div>
 
             <div id="debug-log">Trạng thái: Đang chờ quét mã QR CCCD...</div>
 
@@ -320,36 +321,7 @@ body {
 
         window.addEventListener('load', function () {
             codeReader = new ZXing.BrowserQRCodeReader();
-            let codeReader;
-
-// Hàm bật camera dạng khung vuông
-function startCamera() {
-    const container = document.getElementById('reader-container');
-    if (container) container.style.display = 'flex';
-    
-    codeReader.decodeFromVideoDevice(null, 'interactive', (result, err) => {
-        if (result) {
-            // Khi quét thành công mã QR (ví dụ quét QR trên CCCD)
-            addLog("Quét mã QR qua camera thành công!");
-            dienDuLieuVaoForm(result.text);
             
-            // TỰ ĐỘNG TẮT CAMERA NGAY LẬP TỨC
-            stopCamera();
-        }
-    }).catch(err => {
-        console.error(err);
-        alert("Không thể khởi động camera!");
-    });
-}
-
-// Hàm tắt camera và ẩn khung
-function stopCamera() {
-    if (codeReader) {
-        codeReader.reset();
-    }
-    const container = document.getElementById('reader-container');
-    if (container) container.style.display = 'none';
-}
             const moduleContainer = document.getElementById('module-container');
            for (let key in keywords) {
     const div = document.createElement('label');
@@ -451,31 +423,37 @@ function stopCamera() {
             }
         }
 
-        async function startCamera() {
-            const videoElem = document.getElementById('video-preview');
-            videoElem.style.display = 'block';
-            try {
-                const devices = await codeReader.listVideoInputDevices();
-                if (devices.length > 0) {
-                    selectedDeviceId = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('sau'))?.deviceId || devices[0].deviceId;
-                }
-                addLog("Đang mở camera trực tiếp...");
-                codeReader.decodeFromVideoDevice(selectedDeviceId, 'video-preview', (result, err) => {
-                    if (result) {
-                        addLog("Quét thành công qua camera!");
-                        dienDuLieuVaoForm(result.text);
-                        stopCamera();
-                    }
-                });
-            } catch (err) {
-                addLog("Lỗi mở camera: " + err.message);
+       async function startCamera() {
+    // Hiện khung pop-up lên
+    document.getElementById('camera-popup').style.display = 'flex';
+    
+    const videoElem = document.getElementById('video-preview');
+    try {
+        const devices = await codeReader.listVideoInputDevices();
+        let selectedDeviceId = devices[0]?.deviceId;
+        if (devices.length > 0) {
+            selectedDeviceId = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('sau'))?.deviceId || devices[0].deviceId;
+        }
+        addLog("Đang mở camera trực tiếp...");
+        codeReader.decodeFromVideoDevice(selectedDeviceId, 'video-preview', (result, err) => {
+            if (result) {
+                addLog("Quét thành công qua camera!");
+                dienDuLieuVaoForm(result.text);
+                stopCamera(); // Tự động tắt ngay khi quét được
             }
-        }
+        });
+    } catch (err) {
+        addLog("Lỗi mở camera: " + err.message);
+        stopCamera();
+    }
+}
 
-        function stopCamera() {
-            if (codeReader) codeReader.reset();
-            document.getElementById('video-preview').style.display = 'none';
-        }
+function stopCamera() {
+    if (codeReader) codeReader.reset();
+    // Ẩn khung pop-up đi
+    const popup = document.getElementById('camera-popup');
+    if (popup) popup.style.display = 'none';
+}
 
         function dienDuLieuVaoForm(decodedText) {
             const parts = decodedText.split('|');

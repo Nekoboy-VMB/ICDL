@@ -130,7 +130,7 @@ body {
     <button type="button" onclick="startCamera()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">📷 Bật Camera Quét QR</button>
     
     <!-- Nút Tắt Camera -->
-    <button type="button" onclick="stopCamera()" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px;">✖ Tắt Camera</button>
+   <!-- <button type="button" onclick="stopCamera()" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px;">✖ Tắt Camera</button>-->
 </div>
 
 <!-- Khung Pop-up hình vuông quét mã QR ẩn mặc định -->
@@ -139,7 +139,7 @@ body {
         <h3 style="margin-top: 0; font-size: 15px; color: #333;">Đưa mã QR CCCD vào khung</h3>
         
         <!-- Thẻ video biến thành ô vuông chuẩn 250x250px -->
-        <video id="video-preview" autoplay style="width: 250px; height: 250px; object-fit: cover; border-radius: 8px; background: #000; border: 3px solid #007bff;"></video>
+        <video id="video-preview" autoplay style="width: 300px; height: 300px; object-fit: cover; border-radius: 8px; background: #000; border: 3px solid #007bff;"></video>
         
         <div style="margin-top: 15px;">
             <button type="button" onclick="stopCamera()" style="background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Đóng Camera</button>
@@ -472,13 +472,6 @@ function stopCamera() {
     if (codeReader) codeReader.reset();
     
     // Ẩn khung popup đi
-    const popup = document.getElementById('camera-popup');
-    if (popup) popup.style.display = 'none';
-}
-
-function stopCamera() {
-    if (codeReader) codeReader.reset();
-    // Ẩn khung pop-up đi
     const popup = document.getElementById('camera-popup');
     if (popup) popup.style.display = 'none';
 }

@@ -3,69 +3,399 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đọc QR CCCD (Offline & Camera)</title>
-    <!-- Nhúng thư viện ZXing chạy offline qua CDN -->
+    <title>Biểu Mẫu Đăng Ký Dự Thi ICDL - VMB Education</title>
+    <!-- Thư viện đọc mã QR từ CCCD -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; background: #f9f9f9; }
-        .container { width: 550px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #fff; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .tab-btn { padding: 8px 15px; cursor: pointer; border: 1px solid #ccc; background: #eee; border-radius: 4px; font-weight: bold; margin-right: 5px; }
-        .tab-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; }
-        .section-content { display: none; margin-top: 15px; }
+body { 
+    font-family: "Times New Roman", Times, serif; 
+    background: #525659; 
+    margin: 0; 
+    padding: 0;               /* Cho padding về 0 để nền xám phủ kín sát mép màn hình */
+    color: #000; 
+    min-height: 100vh;        /* Đảm bảo chiều cao nền tối thiểu bằng toàn bộ màn hình */
+}
+
+.container { 
+    width: 100vh;             
+    max-width: 100vh;        
+    margin: 0 auto; 
+    background: #fff; 
+    padding: 30px;           /* Đệm bên trong vừa phải cho điện thoại */
+    box-shadow: 0 0 10px rgba(0,0,0,0.3); 
+    box-sizing: border-box;  
+    min-height: 100vh;       /* Giúp form kéo dài phủ kín trang trên mobile */
+}
+        
+        /* Khung công cụ nhập liệu ban đầu */
+        .admin-toolbar { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 25px; border: 1px solid #ddd; font-family: Arial, sans-serif; }
+        .tab-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-weight: bold; font-size: 13px; }
+        .tab-btn.active { background: #002d62; color: white; border-color: #002d62; }
+        .section-content { display: none; }
         .section-content.active { display: block; }
-        #video-container { width: 100%; max-height: 300px; background: #000; border-radius: 5px; display: none; margin-top: 10px; }
-        #debug-log { background: #1e1e1e; color: #00ff00; padding: 10px; border-radius: 5px; font-family: monospace; height: 100px; overflow-y: auto; font-size: 12px; margin-top: 10px; }
-        #result { margin-top: 15px; font-weight: bold; background: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 5px; border: 1px solid #c8e6c9; }
-        .error { background: #ffebee !important; color: #c62828 !important; border-color: #ffcdd2 !important; }
-        input[type="file"] { margin: 10px 0; }
+        #video-preview { width: 100%; max-height: 220px; background: #000; border-radius: 4px; margin-top: 8px; display: none; }
+
+        .input-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-family: Arial, sans-serif; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full { grid-column: span 2; }
+        .input-form-grid label { font-weight: bold; font-size: 12px; margin-bottom: 4px; color: #333; }
+        .input-form-grid input { padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        .input-form-grid input[readonly] { background-color: #e9ecef; }
+        
+        .module-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 15px; background: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+        .module-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+        .pricing-banner { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold; color: #2e7d32; }
+        .btn-submit { width: 100%; margin-top: 15px; padding: 10px; background: #002d62; color: white; border: none; border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer; font-family: Arial, sans-serif; }
+        .btn-submit:hover { background: #001f3f; }
+
+        /* Giao diện Mẫu Đơn Chuẩn Biểu mẫu 01 */
+        #pdf-preview-box { display: none; background: #fff; border: 1px solid #000; padding: 30px; position: relative; }
+        
+        /* Header có 2 logo và tiêu đề 2 dòng căn giữa đúng chuẩn */
+        .pdf-header-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 22px; }
+        .logo-box { width: 75px; height: 45px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #666; text-align: center; background: #fdfdfd; overflow: hidden; }
+        .logo-box img { width: 100%; height: 100%; object-fit: contain; }
+        
+        /* Định vị tiêu đề nằm thấp xuống 2/3 ảnh thẻ */
+        .pdf-main-title { text-align: center; flex-grow: 1; padding: 0 10px; padding-top: 15px; }
+        .pdf-main-title h3 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; }
+        .pdf-main-title h4 { margin: 3px 0 0 0; font-size: 14px; font-weight: normal; }
+
+        /* Bố cục thông tin thí sinh 2 cột + Ảnh thẻ bên phải */
+        .pdf-info-container { display: grid; grid-template-columns: 1fr 110px; gap: 20px; align-items: start; margin-top: 10px; }
+        .pdf-info-left { display: flex; flex-direction: column; gap: 7px; }
+        .pdf-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px; align-items: flex-end; }
+        .pdf-item { display: flex; font-size: 13px; align-items: flex-end; margin-top: 7px; }
+        .pdf-item label { width: 100px; font-weight: normal; flex-shrink: 0; font-size: 12px; }
+        .pdf-item span { flex-grow: 1; padding-left: 5px; font-weight: bold; color: #000; min-height: 18px; font-size: 12px; }
+
+        .pdf-row-full { display: flex; font-size: 13px; align-items: flex-end; margin-top: 7px; }
+        .pdf-row-full label { width: 100px; font-weight: normal; flex-shrink: 0; font-size: 12px; }
+        .pdf-row-full span { flex-grow: 1; padding-left: 5px; font-weight: bold; color: #000; min-height: 18px; font-size: 12px; }
+
+        .pdf-avatar-frame { width: 100px; height: 125px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; background: #f9f9f9; text-align: center; font-size: 11px; color: #777; overflow: hidden; }
+        .pdf-avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Danh sách module 2 cột có đường kẻ giữa */
+        .pdf-modules-wrapper { margin-top: 12px; padding: 5px 0; }
+        .pdf-modules-grid { display: grid; grid-template-columns: 1fr 1fr; font-size: 12px; }
+        .pdf-module-col-left { padding-right: 15px; border-right: 1px solid #000; display: flex; flex-direction: column; gap: 6px; }
+        .pdf-module-col-right { padding-left: 15px; display: flex; flex-direction: column; gap: 6px; }
+        
+        /* Khu vực ký tên */
+        .pdf-footer { display: grid; grid-template-columns: 1fr 1fr; margin-top: 25px; font-size: 12px; }
+        .pdf-sig-box { text-align: center; }
+
+        .action-buttons-box { display: flex; gap: 10px; margin-top: 20px; font-family: Arial, sans-serif; }
+        .btn-action-primary { flex: 2; padding: 10px; background: #ea4335; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-action-secondary { flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+
+        #debug-log { background: #1e1e1e; color: #00ff00; padding: 8px; border-radius: 4px; font-family: monospace; height: 50px; overflow-y: auto; font-size: 11px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Ứng dụng Đọc QR CCCD (Bảo Mật 100%)</h2>
-        
-        <!-- Nút chuyển đổi tính năng -->
-        <div>
-            <button class="tab-btn active" onclick="switchTab('file')">📂 Quét từ Ảnh</button>
-            <button class="tab-btn" onclick="switchTab('camera')">📷 Quét bằng Camera</button>
+        <!-- KHUNG NHẬP LIỆU BAN ĐẦU -->
+        <div class="admin-toolbar" id="input-container">
+            <h3 style="margin-top: 0; color: #002d62; font-family: Arial;">Hệ Thống Đăng Ký & Tạo Biểu Mẫu ICDL</h3>
+            
+            <div class="tab-group">
+                <button class="tab-btn active" onclick="switchTab('file')">📂 Quét từ Ảnh CCCD</button>
+                <button class="tab-btn" onclick="switchTab('camera')">📷 Quét bằng Camera</button>
+            </div>
+
+            <div id="tab-file" class="section-content active">
+                <label>Tải lên ảnh chụp mặt có mã QR của CCCD gắn chip:</label><br>
+                <input type="file" id="qr-input" accept="image/*" style="margin-top: 5px;">
+            </div>
+
+            <div id="tab-camera" class="section-content">
+                <button onclick="startCamera()" style="padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Bật Camera</button>
+                <button onclick="stopCamera()" style="padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Tắt Camera</button>
+                <br>
+                <video id="video-preview" autoplay></video>
+            </div>
+
+            <div id="debug-log">Trạng thái: Đang chờ quét mã QR CCCD...</div>
+
+            <form id="registration-form" onsubmit="handleGeneratePDF(event)" style="margin-top: 15px;">
+                <div class="input-form-grid">
+                    <div class="form-group full">
+                        <label>Ảnh thẻ cá nhân 3x4 (*):</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="file" id="avatar-input" accept="image/*" onchange="previewAvatar(event)" required>
+                            <img id="avatar-preview" style="width: 50px; height: 65px; object-fit: cover; border: 1px solid #ccc; display: none;" alt="Preview">
+                        </div>
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Số CCCD (Candidate ID):</label>
+                        <input type="text" id="cccd" readonly placeholder="Tự động điền từ QR...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Họ và Tên đệm (Last Name):</label>
+                        <input type="text" id="lastname" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Tên riêng (First Name):</label>
+                        <input type="text" id="firstname" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ngày sinh (Birthday):</label>
+                        <input type="text" id="dob" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Giới tính (Gender):</label>
+                        <input type="text" id="gender" readonly>
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Địa chỉ hiện tại (Address - tự tách Tỉnh/TP làm Nơi sinh):</label>
+                        <input type="text" id="address" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Số điện thoại liên hệ (*):</label>
+                        <input type="tel" id="phone" required placeholder="Ví dụ: 0911655359">
+                    </div>
+                    <div class="form-group">
+                        <label>Email nhận thông tin thanh toán (*):</label>
+                        <input type="email" id="email" required placeholder="Ví dụ: email@gmail.com">
+                    </div>
+                    <div class="form-group full">
+                        <label>Nghề nghiệp (*):</label>
+                        <input type="text" id="job" required placeholder="Ví dụ: Sinh viên / Nhân viên văn phòng">
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Đăng ký chọn Module thi (*):</label>
+                        <div class="module-checkbox-grid" id="module-container"></div>
+                    </div>
+
+                    <div class="form-group full">
+                        <div class="pricing-banner">
+                            <span>Tổng module chọn: <span id="count-module">0</span></span>
+                            <span>Tổng học phí: <span id="total-price">0đ</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Xác Nhận & Xuất Mẫu Đơn Đăng Ký Chuẩn</button>
+            </form>
         </div>
 
-        <!-- Phần 1: Quét từ file ảnh -->
-        <div id="tab-file" class="section-content active">
-            <label><b>Chọn ảnh mã QR CCCD trên máy:</b></label><br>
-            <input type="file" id="qr-input" accept="image/*">
-        </div>
+        <!-- MẪU ĐƠN CHUẨN XUẤT RA -->
+        <div id="pdf-preview-box">
+            <!-- Header có 2 logo và tiêu đề 2 dòng được đẩy xuống thấp trùng vị trí 2/3 ảnh thẻ -->
+            <div class="pdf-header-top">
+                <div class="logo-box">
+                    <img src="ICDLlogo.png" alt="ICDL Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='ICDL Logo';">
+                </div>
+                
+                <div class="logo-box">
+                    <img src="VMBlogo.png" alt="VMB Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='VMB Logo';">
+                </div>
+            </div>
 
-        <!-- Phần 2: Quét trực tiếp bằng camera -->
-        <div id="tab-camera" class="section-content">
-            <button onclick="startCamera()" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Bật Camera</button>
-            <button onclick="stopCamera()" style="padding: 8px 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Tắt Camera</button>
-            <br>
-            <video id="video-preview" width="100%" autoplay style="border-radius: 5px; margin-top: 10px; background: #000; display:none;"></video>
-        </div>
-        
-        <p style="margin-bottom: 5px; margin-top: 15px;"><b>Nhật ký xử lý:</b></p>
-        <div id="debug-log">Chờ thao tác...</div>
+            <!-- Bố cục thông tin thí sinh tách rời ATC Name và ATC Code thành các hàng riêng biệt -->
+             <div class="pdf-main-title">
+                    <h3>ICDL CANDIDATE REGISTRATION</h3>
+                    <h4>(bản đăng ký dự thi ICDL)</h4>
+                </div>
+            <div class="pdf-info-container">
+                <div class="pdf-info-left">
+                    <div class="pdf-row-full"><label><strong>ATC Name:</strong><br> (Tên TTKT)</label><span style="color: #000000;">VMB EDUCATION</span></div>
+                    <div class="pdf-row-full"><label><strong>ATC Code:</strong><br> (Mã TTKT)</label><span style="color: #000000;">VN00000074</span></div>
+                    <div class="pdf-row-2col">
+                        <div class="pdf-item"><label><strong>Last Name:</strong><br> (Họ và Tên đệm)</label><span id="pdf-lastname"></span></div>
+                        <div class="pdf-item"><label><strong>First Name:</strong><br> (Tên)</label><span id="pdf-firstname"></span></div>
+                    </div>
+                    <div class="pdf-row-2col">
+                        <div class="pdf-item"><label><strong>Candidate ID:</strong><br> (Số CMND/CCCD)</label><span id="pdf-cccd"></span></div>
+                        <div class="pdf-item"><label><strong>Birthday:</strong><br> (Ngày sinh)</label><span id="pdf-dob"></span></div>
+                    </div>
+                    <div class="pdf-row-2col">
+                        <div class="pdf-item"><label><strong>Place of Birth:</strong><br> (Nơi sinh)</label><span id="pdf-pob"></span></div>
+                        <div class="pdf-item"><label><strong>Gender:</strong><br> (Giới tính)</label><span id="pdf-gender"></span></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="pdf-avatar-frame">
+                        <img id="pdf-avatar-img" src="" alt="Ảnh thẻ">
+                    </div>
+                </div>
+            </div>
 
-        <div id="result">Kết quả thông tin CCCD sẽ hiển thị ở đây...</div>
+            <!-- Các hàng đơn riêng lẻ -->
+            <div class="pdf-row-full"><label><strong>Address:</strong><br> (Địa chỉ)</label><span id="pdf-address"></span></div>
+            
+            <div class="pdf-row-2col" style="margin-top: 7px;">
+                <div class="pdf-item"><label><strong>Mobile:</strong><br> (Số điện thoại)</label><span id="pdf-phone"></span></div>
+                <div class="pdf-item"><label><strong>Email:<strong></label><span id="pdf-email"></span></div>
+            </div>
+
+            <div class="pdf-row-full"><label><strong>Occupation<br>(Nghề nghiệp)</strong></label><span id="pdf-job"></span></div>
+
+            <div style="margin-top: 15px; font-weight: bold; font-size: 13px;">Modules đăng ký dự thi:</div>
+            <div class="pdf-modules-wrapper">
+                <div class="pdf-modules-grid">
+                    <div class="pdf-module-col-left" id="pdf-modules-col1"></div>
+                    <div class="pdf-module-col-right" id="pdf-modules-col2"></div>
+                </div>
+            </div>
+
+            <p style="font-size: 12px; font-style: italic; margin-top: 20px; text-align: justify; line-height: 1.4;">
+                Tôi cam đoan các thông tin trên là đúng sự thật và cam kết sẽ thực hiện đúng các quy định về tổ chức thi và cấp chứng chỉ ứng dụng CNTT.
+            </p>
+
+            <!-- Khu vực ký tên -->
+            <div class="pdf-footer">
+                <div class="pdf-sig-box">
+                    <b>Signature of ATC</b><br>
+                    <span style="font-size: 10px; color:#444;">(Đại diện trung tâm khảo thí)</span>
+                </div>
+                <div class="pdf-sig-box">
+                    <div id="pdf-current-date" style="font-size: 11px; margin-bottom: 5px;">TP.HCM, ngày ... tháng ... năm ......</div>
+                    <b>Signature of Candidate</b><br>
+                    <span style="font-size: 10px; color:#444;">(Ký và ghi rõ họ tên)</span><br><br><br><br><br>
+                    <b id="pdf-sign-name" style="font-size: 12px;"></b>
+                </div>
+            </div>
+
+            <div style="background-color: #e2f0cb; border: 1px solid #b5d568; padding: 10px; border-radius: 4px; margin-top: 20px; text-align: center; color: #385e00; font-size: 12px; font-family: Arial;">
+                <b>📌 Hướng dẫn:</b> Bấm vào nút bên dưới để mở Gmail và gửi thông tin học phí, mã QR thanh toán cho học viên.
+            </div>
+
+            <div class="action-buttons-box">
+                <a id="btn-open-gmail" href="#" target="_blank" class="btn-action-primary">✉ Mở Gmail Gửi Thư Thanh Toán</a>
+                <button onclick="quayLaiChinhSua()" class="btn-action-secondary">✏ Chỉnh sửa lại thông tin</button>
+            </div>
+        </div>
     </div>
 
     <script>
         const logBox = document.getElementById('debug-log');
-        const resultBox = document.getElementById('result');
         const fileInput = document.getElementById('qr-input');
         let codeReader = null;
         let selectedDeviceId = null;
+        let base64Avatar = "";
 
-        function addLog(msg, isError = false) {
+        const keywords = {
+            m1: { en: "Computer Essentials", vi: "(Cơ bản về máy tính)" },
+            m2: { en: "Online Essentials", vi: "(Sử dụng mạng trực tuyến)" },
+            m3: { en: "Word Processing", vi: "(Xử lý văn bản)" },
+            m4: { en: "Spreadsheets", vi: "(Bảng tính cơ bản)" },
+            m5: { en: "Presentation", vi: "(Trình chiếu cơ bản)" },
+            m6: { en: "Data Analytic", vi: "(Phân tích dữ liệu)" },
+            m7: { en: "Using Database", vi: "(Sử dụng cơ sở dữ liệu)" },
+            m8: { en: "Artificial Intelligence", vi: "(Trí tuệ nhân tạo)" },
+            m9: { en: "Advanced Word Processing", vi: "(Xử lý văn bản nâng cao)" },
+            m10: { en: "Management Spreadsheets", vi: "(Bảng tính nâng cao)" },
+            m11: { en: "Presentation Advanced", vi: "(Trình chiếu nâng cao)" },
+            m12: { en: "IT Security", vi: "(Bảo mật CNTT)" }
+        };
+
+        function addLog(msg) {
             console.log(msg);
-            const color = isError ? '#ff6b6b' : '#00ff00';
-            logBox.innerHTML += `<br><span style="color: ${color}">> ${msg}</span>`;
+            logBox.innerHTML = `> ${msg}`;
             logBox.scrollTop = logBox.scrollHeight;
         }
 
-        // Chuyển đổi qua lại giữa Tab Ảnh và Tab Camera
+        window.addEventListener('load', function () {
+            codeReader = new ZXing.BrowserQRCodeReader();
+            
+            const moduleContainer = document.getElementById('module-container');
+           for (let key in keywords) {
+    const div = document.createElement('label');
+    div.className = 'module-item';
+    div.style.display = "flex";
+    div.style.alignItems = "flex-start";
+    div.style.gap = "8px";
+    
+    div.innerHTML = `
+        <input type="checkbox" name="modules" value="${key}" onchange="tinhTien()" style="margin-top: 2px;">
+        <div>
+            <div style="font-weight: bold; color: #000; font-size: 12px;">${keywords[key].en}</div>
+            <div style="font-size: 11px; color: #666;">${keywords[key].vi}</div>
+        </div>
+    `;
+    moduleContainer.appendChild(div);
+}
+
+            fileInput.addEventListener('change', e => {
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+                const imageUrl = URL.createObjectURL(files[0]);
+                addLog("Đang đọc mã QR từ file ảnh CCCD...");
+
+                codeReader.decodeFromImageUrl(imageUrl)
+                    .then(result => {
+                        addLog("Quét mã QR CCCD thành công!");
+                        dienDuLieuVaoForm(result.text);
+                    })
+                    .catch(err => {
+                        addLog("Không tìm thấy mã QR hợp lệ trong ảnh.");
+                    });
+            });
+        });
+
+        function previewAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    base64Avatar = e.target.result;
+                    const preview = document.getElementById('avatar-preview');
+                    preview.src = base64Avatar;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function tinhTien() {
+            let selected = {};
+            for (let key in keywords) {
+                const checkbox = document.querySelector(`input[name="modules"][value="${key}"]`);
+                selected[key] = (checkbox && checkbox.checked) ? "X" : "";
+            }
+
+            let giaTienSo = 0;
+            let count = 0;
+            for (let key in selected) {
+                if (selected[key] === "X") count++;
+            }
+
+            const coCombo5 = (selected.m1 === "X" && selected.m2 === "X" && selected.m3 === "X" && selected.m4 === "X" && selected.m5 === "X");
+            if (coCombo5) {
+                giaTienSo += 2200000;
+            } else {
+                ['m1', 'm2', 'm3', 'm4', 'm5'].forEach(key => {
+                    if (selected[key] === "X") giaTienSo += 640000;
+                });
+            }
+
+            if (selected.m8 === "X")  giaTienSo += 1500000;
+            if (selected.m6 === "X")  giaTienSo += 800000;
+            if (selected.m7 === "X")  giaTienSo += 800000;
+            if (selected.m12 === "X") giaTienSo += 800000;
+
+            const danhSachDaTinh = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm12'];
+            for (let key in selected) {
+                if (!danhSachDaTinh.includes(key) && selected[key] === "X") {
+                    giaTienSo += 640000;
+                }
+            }
+
+            document.getElementById('count-module').innerText = count;
+            document.getElementById('total-price').innerText = giaTienSo.toLocaleString('vi-VN') + "đ";
+        }
+
         function switchTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.section-content').forEach(sec => sec.classList.remove('active'));
@@ -80,106 +410,211 @@
             }
         }
 
-        window.addEventListener('load', function () {
-            codeReader = new ZXing.BrowserQRCodeReader();
-            addLog("Đã khởi tạo hệ thống quét ZXing nội bộ.");
-
-            // Xử lý quét từ file ảnh
-            fileInput.addEventListener('change', e => {
-                logBox.innerHTML = "Bắt đầu nạp file ảnh cục bộ...";
-                resultBox.className = "";
-                
-                const files = e.target.files;
-                if (!files || files.length === 0) return;
-
-                const file = files[0];
-                addLog(`Đã nhận file: ${file.name} (${Math.round(file.size / 1024)} KB)`);
-
-                const imageUrl = URL.createObjectURL(file);
-                addLog("Đang giải mã QR nội bộ...");
-
-                codeReader.decodeFromImageUrl(imageUrl)
-                    .then(result => {
-                        addLog("=> THÀNH CÔNG! Đã giải mã xong mã QR từ ảnh.", false);
-                        hienThiThongTinCCCD(result.text);
-                    })
-                    .catch(err => {
-                        addLog(`=> THẤT BẠI: Không đọc được QR (${err})`, true);
-                        resultBox.className = "error";
-                        resultBox.innerHTML = "⚠️ Không đọc được mã QR từ ảnh này.";
-                    });
-            });
-        });
-
-        // Bật camera quét trực tiếp
         async function startCamera() {
-            resultBox.className = "";
-            resultBox.innerHTML = "Đang chờ quét mã QR từ camera...";
             const videoElem = document.getElementById('video-preview');
             videoElem.style.display = 'block';
-
             try {
-                // Lấy danh sách camera thiết bị
-                const videoInputDevices = await codeReader.listVideoInputDevices();
-                if (videoInputDevices.length > 0) {
-                    // Ưu tiên camera sau (environment) nếu dùng điện thoại, hoặc camera mặc định trên máy tính
-                    selectedDeviceId = videoInputDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('sau'))?.deviceId || videoInputDevices[0].deviceId;
+                const devices = await codeReader.listVideoInputDevices();
+                if (devices.length > 0) {
+                    selectedDeviceId = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('sau'))?.deviceId || devices[0].deviceId;
                 }
-
-                addLog("Đang bật camera...");
+                addLog("Đang mở camera trực tiếp...");
                 codeReader.decodeFromVideoDevice(selectedDeviceId, 'video-preview', (result, err) => {
                     if (result) {
-                        addLog("=> THÀNH CÔNG! Đã quét được QR từ camera.", false);
-                        hienThiThongTinCCCD(result.text);
-                        // Dừng camera sau khi quét thành công
+                        addLog("Quét thành công qua camera!");
+                        dienDuLieuVaoForm(result.text);
                         stopCamera();
-                    }
-                    if (err && !(err instanceof ZXing.NotFoundException)) {
-                        // Bỏ qua lỗi NotFoundException liên tục vì camera quét mỗi khung hình liên tục
-                        // console.error(err);
                     }
                 });
             } catch (err) {
-                addLog(`Lỗi mở camera: ${err.message}`, true);
-                resultBox.className = "error";
-                resultBox.innerHTML = "⚠️ Không thể mở camera. Hãy cấp quyền truy cập camera cho trình duyệt.";
+                addLog("Lỗi mở camera: " + err.message);
             }
         }
 
-        // Tắt camera
         function stopCamera() {
-            if (codeReader) {
-                codeReader.reset();
-                addLog("Đã tắt camera.");
-            }
-            const videoElem = document.getElementById('video-preview');
-            if (videoElem) {
-                videoElem.style.display = 'none';
+            if (codeReader) codeReader.reset();
+            document.getElementById('video-preview').style.display = 'none';
+        }
+
+        function dienDuLieuVaoForm(decodedText) {
+            const parts = decodedText.split('|');
+            if (parts.length >= 7) {
+                document.getElementById('cccd').value = parts[0] || '';
+                const fullName = (parts[2] || '').trim();
+                const nameParts = fullName.split(' ');
+                if (nameParts.length > 1) {
+                    const firstName = nameParts.pop();
+                    const lastName = nameParts.join(' ');
+                    document.getElementById('lastname').value = lastName;
+                    document.getElementById('firstname').value = firstName;
+                } else {
+                    document.getElementById('lastname').value = fullName;
+                    document.getElementById('firstname').value = '';
+                }
+
+                let rawDob = parts[3] || '';
+                if (rawDob.length === 8) {
+                    rawDob = `${rawDob.slice(0,2)}/${rawDob.slice(2,4)}/${rawDob.slice(4,8)}`;
+                }
+                document.getElementById('dob').value = rawDob;
+                document.getElementById('gender').value = parts[4] || '';
+                document.getElementById('address').value = parts[5] || '';
+                addLog("Đã nạp dữ liệu định danh CCCD vào form!");
+            } else {
+                addLog("Mã QR không đúng định dạng thông tin CCCD.");
             }
         }
 
-        // Hàm bóc tách thông tin chuẩn CCCD gắn chip Bộ Công an
-        function hienThiThongTinCCCD(decodedText) {
-            const parts = decodedText.split('|');
-            
-            if (parts.length >= 7) {
-                resultBox.className = "";
-                resultBox.innerHTML = `
-                    ✅ <b>ĐỌC DỮ LIỆU CCCD THÀNH CÔNG!</b><br><br>
-                    - <b>Số CCCD:</b> ${parts[0]}<br>
-                    - <b>Số CMND cũ:</b> ${parts[1] || 'Không có'}<br>
-                    - <b>Họ và tên:</b> ${parts[2]}<br>
-                    - <b>Ngày sinh:</b> ${parts[3]}<br>
-                    - <b>Giới tính:</b> ${parts[4]}<br>
-                    - <b>Địa chỉ thường trú:</b> ${parts[5]}<br>
-                    - <b>Ngày cấp:</b> ${parts[6]}
-                `;
-            } else {
-                resultBox.className = "error";
-                resultBox.innerHTML = `⚠️ Đọc được QR nhưng dữ liệu không đúng chuẩn CCCD!<br><br><b>Nội dung thô:</b> <code>${decodedText}</code>`;
+        function handleGeneratePDF(e) {
+            e.preventDefault();
+            const cccd = document.getElementById('cccd').value;
+            if (!cccd) {
+                alert("Vui lòng quét mã QR trên CCCD trước khi xác nhận!");
+                return;
             }
+
+            let soModule = parseInt(document.getElementById('count-module').innerText);
+            if (soModule === 0) {
+                alert("Vui lòng chọn ít nhất một module đăng ký thi!");
+                return;
+            }
+
+            const ho_dem = document.getElementById('lastname').value;
+            const ten = document.getElementById('firstname').value;
+            const sdt = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const job = document.getElementById('job').value;
+            const dob = document.getElementById('dob').value;
+            const gender = document.getElementById('gender').value;
+            const address = document.getElementById('address').value;
+            const totalPriceText = document.getElementById('total-price').innerText;
+
+            let pob = "";
+            if (address.includes(",")) {
+                const addParts = address.split(",");
+                pob = addParts[addParts.length - 1].trim();
+            } else {
+                pob = address;
+            }
+
+            let col1Html = "";
+            let col2Html = "";
+            let emailModulesList = [];
+            let index = 0;
+
+            for (let key in keywords) {
+    const checkbox = document.querySelector(`input[name="modules"][value="${key}"]`);
+    if (checkbox && checkbox.checked) {
+        const mod = keywords[key]; // Lấy object gồm {en, vi}
+        
+        const itemHtml = `
+            <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="font-weight: bold; color: #000; font-size: 12px;">${mod.en}</div>
+                    <div style="font-size: 10px; color: #555;">${mod.vi}</div>
+                </div>
+                <span style="font-weight: bold;">☑</span>
+            </div>
+        `;
+        
+        if (index % 2 === 0) {
+            col1Html += itemHtml;
+        } else {
+            col2Html += itemHtml;
+        }
+                    emailModulesList.push(`- ${mod.en} ${mod.vi}`);
+                    index++;
+                }
+            }
+
+            document.getElementById('pdf-lastname').innerText = ho_dem;
+            document.getElementById('pdf-firstname').innerText = ten;
+            document.getElementById('pdf-cccd').innerText = cccd;
+            document.getElementById('pdf-dob').innerText = dob;
+            document.getElementById('pdf-gender').innerText = gender;
+            document.getElementById('pdf-pob').innerText = pob;
+            document.getElementById('pdf-address').innerText = address;
+            document.getElementById('pdf-phone').innerText = sdt;
+            document.getElementById('pdf-email').innerText = email;
+            document.getElementById('pdf-job').innerText = job;
+            document.getElementById('pdf-sign-name').innerText = `${ho_dem} ${ten}`;
+            
+            document.getElementById('pdf-modules-col1').innerHTML = col1Html;
+            document.getElementById('pdf-modules-col2').innerHTML = col2Html;
+
+            if (base64Avatar) {
+                document.getElementById('pdf-avatar-img').src = base64Avatar;
+            }
+
+            const now = new Date();
+            document.getElementById('pdf-current-date').innerText = `TP.HCM, ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
+
+            let giaTienSo = 0;
+            let selectedRaw = {};
+            for (let key in keywords) {
+                const cb = document.querySelector(`input[name="modules"][value="${key}"]`);
+                selectedRaw[key] = (cb && cb.checked) ? "X" : "";
+            }
+            const coCombo5 = (selectedRaw.m1 === "X" && selectedRaw.m2 === "X" && selectedRaw.m3 === "X" && selectedRaw.m4 === "X" && selectedRaw.m5 === "X");
+            if (coCombo5) {
+                giaTienSo += 2200000;
+            } else {
+                ['m1', 'm2', 'm3', 'm4', 'm5'].forEach(k => { if(selectedRaw[k]==="X") giaTienSo += 640000; });
+            }
+            if (selectedRaw.m8 === "X")  giaTienSo += 1500000;
+            if (selectedRaw.m6 === "X")  giaTienSo += 800000;
+            if (selectedRaw.m7 === "X")  giaTienSo += 800000;
+            if (selectedRaw.m12 === "X") giaTienSo += 800000;
+            ['m9','m10','m11'].forEach(k => { if(selectedRaw[k]==="X") giaTienSo += 640000; });
+
+            const noiDungCK = `${ho_dem} ${ten} - ${sdt} - ICDL`.toUpperCase();
+            const qrUrl = `https://img.vietqr.io/image/MB-1973033338-compact2.jpg?amount=${giaTienSo}&addInfo=${encodeURIComponent(noiDungCK)}`;
+
+            const candidateRecord = {
+                cccd, ho_dem, ten, sdt, email, job, dob, address, pob,
+                modules: emailModulesList, total: totalPriceText, time: now.toLocaleString()
+            };
+            let danhSachDangKy = JSON.parse(localStorage.getItem('icdl_candidates') || '[]');
+            danhSachDangKy.push(candidateRecord);
+            localStorage.setItem('icdl_candidates', JSON.stringify(danhSachDangKy));
+
+            const subject = encodeURIComponent(`[VMB EDUCATION] Xác Nhận Đăng Ký Dự Thi ICDL & Thông Tin Thanh Toán`);
+            const body = encodeURIComponent(
+`Chào bạn ${ho_dem} ${ten},
+
+Cảm ơn bạn đã đăng ký dự thi ICDL tại VMB Education. Dưới đây là thông tin đăng ký và thanh toán học phí của bạn:
+
+DANH SÁCH MODULE ĐĂNG KÝ:
+${emailModulesList.join('\n')}
+
+- Tổng số lượng: ${soModule} Module
+- Tổng học phí cần thanh toán: ${totalPriceText}
+
+THÔNG TIN CHUYỂN KHOẢN:
+- Ngân hàng: MB Bank
+- Số tài khoản: 1973.033.338
+- Chủ tài khoản: Công ty Cổ phần Đầu tư Phát triển Sách và Học liệu Điện tử Việt Nam
+- Nội dung chuyển khoản: ${noiDungCK}
+
+Quét mã QR thanh toán nhanh: ${qrUrl}
+
+Vui lòng kiểm tra lại thông tin, thực hiện chuyển khoản và gửi màn hình giao dịch cho tư vấn viên để kích hoạt hồ sơ chính thức.
+
+Trân trọng,
+VMB EDUCATION.`
+            );
+
+            document.getElementById('btn-open-gmail').href = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+
+            document.getElementById('input-container').style.display = 'none';
+            document.getElementById('pdf-preview-box').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function quayLaiChinhSua() {
+            document.getElementById('pdf-preview-box').style.display = 'none';
+            document.getElementById('input-container').style.display = 'block';
         }
     </script>
-
 </body>
 </html>

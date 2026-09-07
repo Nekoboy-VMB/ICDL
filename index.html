@@ -27,21 +27,22 @@
     <script>
         let html5QrCode;
 
-        function startScanner() {
-            const documentElement = document.getElementById('reader');
+       function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
             
+            const config = { 
+                fps: 25,                    // Tăng số khung hình quét mỗi giây lên 25
+                qrbox: { width: 220, height: 220 }, // Định nghĩa kích thước khung quét gọn hơn
+                aspectRatio: 1.0            // Giữ tỷ lệ khung hình camera ổn định
+            };
+
             html5QrCode.start(
-                { facingMode: "environment" }, // Ưu tiên dùng camera sau nếu là điện thoại, hoặc webcam máy tính
-                {
-                    fps: 10,    // Số khung hình quét mỗi giây
-                    qrbox: 250  // Kích thước ô vuông quét
-                },
+                { facingMode: "environment" }, 
+                config,
                 (decodedText, decodedResult) => {
-                    // Thành công khi quét được QR
-                    console.log(`Code matched = ${decodedText}`, decodedResult);
+                    // Xử lý khi quét thành công
+                    console.log(`Đã quét được: ${decodedText}`);
                     
-                    // Tách dữ liệu CCCD theo dấu |
                     const parts = decodedText.split('|');
                     if (parts.length >= 7) {
                         document.getElementById('result').innerHTML = `
@@ -55,14 +56,13 @@
                         document.getElementById('result').innerText = "Dữ liệu QR không phải chuẩn CCCD!";
                     }
 
-                    // Dừng camera sau khi quét xong
                     html5QrCode.stop().catch(err => console.error("Lỗi dừng camera", err));
                 },
                 (errorMessage) => {
-                    // Lỗi trong quá trình quét liên tục (bỏ qua log này để tránh rác console)
+                    // Bỏ qua lỗi quét liên tục từng khung hình để đỡ nặng log
                 }
             ).catch(err => {
-                alert("Không thể mở được camera! Hãy kiểm tra lại quyền truy cập hoặc thiết bị.");
+                alert("Không thể mở được camera!");
                 console.error("Lỗi khởi động camera:", err);
             });
         }

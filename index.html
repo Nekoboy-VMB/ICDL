@@ -3,130 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký ICDL - Quét CCCD</title>
-    <!-- Thư viện quét QR chuẩn -->
+    <title>Quét QR CCCD</title>
+    <!-- Thư viện quét QR -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
-        .scanner-section { text-align: center; margin-bottom: 25px; padding: 20px; background: #eef2f7; border-radius: 8px; }
-        .btn-camera {
-            background-color: #e67e22;
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            display: inline-block;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; box-sizing: border-box; }
-        input:focus { border-color: #0056b3; outline: none; }
-        .btn-submit { background-color: #0056b3; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .note { font-size: 13px; color: #d9534f; margin-top: 10px; font-weight: bold; }
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; }
+        #reader { width: 400px; margin: 20px auto; }
+        #result { margin-top: 20px; font-weight: bold; color: green; font-size: 16px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>ĐĂNG KÝ DỰ THI CHỨNG CHỈ ICDL</h2>
+    <h2>Ứng dụng Quét QR CCCD</h2>
     
-    <div class="scanner-section">
-        <!-- Nút chụp ảnh kèm debug thông báo rõ ràng -->
-        <label for="camera-input" class="btn-camera">
-            📸 Chụp & Đọc Mã QR CCCD
-        </label>
-        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
-        <div id="status-msg" class="note">Trạng thái: Sẵn sàng chụp ảnh...</div>
-    </div>
+    <!-- Nút bấm để kích hoạt camera tránh bị chặn ngầm -->
+    <button onclick="startScanner()">Bật Camera Quét</button>
 
-    <form id="icdl-form" onsubmit="event.preventDefault(); alert('Đăng ký thành công!');">
-        <div class="form-group">
-            <label>Chuỗi thô nhận được (Debug):</label>
-            <textarea id="debug-text" rows="2" placeholder="Kết quả quét sẽ hiện ở đây..."></textarea>
-        </div>
+    <!-- Khung chứa camera -->
+    <div id="reader"></div>
+    <div id="result">Đang chờ quét...</div>
 
-        <div class="form-group">
-            <label>Số CCCD:</label>
-            <input type="text" id="cccd" name="cccd" required placeholder="Tự động điền...">
-        </div>
+    <script>
+        let html5QrCode;
 
-        <div class="form-group">
-            <label>Họ và tên:</label>
-            <input type="text" id="fullname" name="fullname" required placeholder="Họ tên thí sinh">
-        </div>
-
-        <div class="form-group">
-            <label>Ngày sinh:</label>
-            <input type="text" id="dob" name="dob" required placeholder="DD/MM/YYYY">
-        </div>
-
-        <div class="form-group">
-            <label>Giới tính:</label>
-            <input type="text" id="gender" name="gender" placeholder="Nam/Nữ">
-        </div>
-
-        <div class="form-group">
-            <label>Địa chỉ thường trú:</label>
-            <input type="text" id="address" name="address" required placeholder="Địa chỉ trên CCCD">
-        </div>
-
-        <button type="submit" class="btn-submit">Xác nhận Đăng ký</button>
-    </form>
-</div>
-
-<!-- Div ảo bắt buộc của html5-qrcode -->
-<div id="qr-reader" style="display:none;"></div>
-
-<script>
-    const html5QrCode = new Html5Qrcode("qr-reader");
-    const cameraInput = document.getElementById('camera-input');
-    const statusMsg = document.getElementById('status-msg');
-
-    cameraInput.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
-            statusMsg.innerText = "Trạng thái: Đang phân tích ảnh chụp...";
-
-            html5QrCode.scanFile(file, true)
-            .then(decodedText => {
-                statusMsg.innerText = "Trạng thái: Đọc mã QR thành công! 🎉";
-                document.getElementById('debug-text').value = decodedText;
-                
-                const parts = decodedText.split("|");
-                if (parts.length >= 4) {
-                    document.getElementById("cccd").value = parts[0] || "";       
+        function startScanner() {
+            const documentElement = document.getElementById('reader');
+            html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" }, // Ưu tiên dùng camera sau nếu là điện thoại, hoặc webcam máy tính
+                {
+                    fps: 10,    // Số khung hình quét mỗi giây
+                    qrbox: 250  // Kích thước ô vuông quét
+                },
+                (decodedText, decodedResult) => {
+                    // Thành công khi quét được QR
+                    console.log(`Code matched = ${decodedText}`, decodedResult);
                     
-                    let nameIndex = 2, dobIndex = 3, genderIndex = 4, addressIndex = 5;
-                    if (parts[1] && /^\d{9}$/.test(parts[1])) {
-                        nameIndex = 3; dobIndex = 4; genderIndex = 5; addressIndex = 6;
+                    // Tách dữ liệu CCCD theo dấu |
+                    const parts = decodedText.split('|');
+                    if (parts.length >= 7) {
+                        document.getElementById('result').innerHTML = `
+                            Quét thành công!<br>
+                            Số CCCD: ${parts[0]}<br>
+                            Họ tên: ${parts[2]}<br>
+                            Ngày sinh: ${parts[3]}<br>
+                            Địa chỉ: ${parts[5]}
+                        `;
+                    } else {
+                        document.getElementById('result').innerText = "Dữ liệu QR không phải chuẩn CCCD!";
                     }
 
-                    document.getElementById("fullname").value = parts[nameIndex] || "";   
-                    let rawDob = parts[dobIndex] || "";
-                    if (rawDob.length === 8) {
-                        document.getElementById("dob").value = `${rawDob.substring(0,2)}/${rawDob.substring(2,4)}/${rawDob.substring(4,8)}`;
-                    } else {
-                        document.getElementById("dob").value = rawDob;
-                    }
-                    document.getElementById("gender").value = parts[genderIndex] || "";     
-                    document.getElementById("address").value = parts[addressIndex] || "";    
-                } else {
-                    alert("Đã đọc được ảnh nhưng cấu trúc chuỗi không khớp CCCD: " + decodedText);
+                    // Dừng camera sau khi quét xong
+                    html5QrCode.stop().catch(err => console.error("Lỗi dừng camera", err));
+                },
+                (errorMessage) => {
+                    // Lỗi trong quá trình quét liên tục (bỏ qua log này để tránh rác console)
                 }
-            })
-            .catch(err => {
-                statusMsg.innerText = "Trạng thái: Không tìm thấy QR trong ảnh! Hãy chụp gần và rõ hơn.";
-                console.error("Lỗi scanFile: ", err);
+            ).catch(err => {
+                alert("Không thể mở được camera! Hãy kiểm tra lại quyền truy cập hoặc thiết bị.");
+                console.error("Lỗi khởi động camera:", err);
             });
         }
-    });
-</script>
+    </script>
 
 </body>
 </html>

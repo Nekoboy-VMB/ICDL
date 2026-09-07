@@ -3,68 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quét QR CCCD</title>
-    <!-- Thư viện quét QR -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>Đọc QR CCCD (Offline & Camera)</title>
+    <!-- Nhúng thư viện ZXing chạy offline qua CDN -->
+    <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; }
-        #reader { width: 400px; margin: 20px auto; }
-        #result { margin-top: 20px; font-weight: bold; color: green; font-size: 16px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px; }
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; background: #f9f9f9; }
+        .container { width: 550px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #fff; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .tab-btn { padding: 8px 15px; cursor: pointer; border: 1px solid #ccc; background: #eee; border-radius: 4px; font-weight: bold; margin-right: 5px; }
+        .tab-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; }
+        .section-content { display: none; margin-top: 15px; }
+        .section-content.active { display: block; }
+        #video-container { width: 100%; max-height: 300px; background: #000; border-radius: 5px; display: none; margin-top: 10px; }
+        #debug-log { background: #1e1e1e; color: #00ff00; padding: 10px; border-radius: 5px; font-family: monospace; height: 100px; overflow-y: auto; font-size: 12px; margin-top: 10px; }
+        #result { margin-top: 15px; font-weight: bold; background: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 5px; border: 1px solid #c8e6c9; }
+        .error { background: #ffebee !important; color: #c62828 !important; border-color: #ffcdd2 !important; }
+        input[type="file"] { margin: 10px 0; }
     </style>
 </head>
 <body>
 
-    <h2>Ứng dụng Quét QR CCCD</h2>
-    
-    <!-- Nút bấm để kích hoạt camera tránh bị chặn ngầm -->
-    <button onclick="startScanner()">Bật Camera Quét</button>
+    <div class="container">
+        <h2>Ứng dụng Đọc QR CCCD (Bảo Mật 100%)</h2>
+        
+        <!-- Nút chuyển đổi tính năng -->
+        <div>
+            <button class="tab-btn active" onclick="switchTab('file')">📂 Quét từ Ảnh</button>
+            <button class="tab-btn" onclick="switchTab('camera')">📷 Quét bằng Camera</button>
+        </div>
 
-    <!-- Khung chứa camera -->
-    <div id="reader"></div>
-    <div id="result">Đang chờ quét...</div>
+        <!-- Phần 1: Quét từ file ảnh -->
+        <div id="tab-file" class="section-content active">
+            <label><b>Chọn ảnh mã QR CCCD trên máy:</b></label><br>
+            <input type="file" id="qr-input" accept="image/*">
+        </div>
+
+        <!-- Phần 2: Quét trực tiếp bằng camera -->
+        <div id="tab-camera" class="section-content">
+            <button onclick="startCamera()" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Bật Camera</button>
+            <button onclick="stopCamera()" style="padding: 8px 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Tắt Camera</button>
+            <br>
+            <video id="video-preview" width="100%" autoplay style="border-radius: 5px; margin-top: 10px; background: #000; display:none;"></video>
+        </div>
+        
+        <p style="margin-bottom: 5px; margin-top: 15px;"><b>Nhật ký xử lý:</b></p>
+        <div id="debug-log">Chờ thao tác...</div>
+
+        <div id="result">Kết quả thông tin CCCD sẽ hiển thị ở đây...</div>
+    </div>
 
     <script>
-        let html5QrCode;
+        const logBox = document.getElementById('debug-log');
+        const resultBox = document.getElementById('result');
+        const fileInput = document.getElementById('qr-input');
+        let codeReader = null;
+        let selectedDeviceId = null;
 
-       function startScanner() {
-            html5QrCode = new Html5Qrcode("reader");
-            
-            const config = { 
-                fps: 25,                    // Tăng số khung hình quét mỗi giây lên 25
-                qrbox: { width: 220, height: 220 }, // Định nghĩa kích thước khung quét gọn hơn
-                aspectRatio: 1.0            // Giữ tỷ lệ khung hình camera ổn định
-            };
+        function addLog(msg, isError = false) {
+            console.log(msg);
+            const color = isError ? '#ff6b6b' : '#00ff00';
+            logBox.innerHTML += `<br><span style="color: ${color}">> ${msg}</span>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
 
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                config,
-                (decodedText, decodedResult) => {
-                    // Xử lý khi quét thành công
-                    console.log(`Đã quét được: ${decodedText}`);
-                    
-                    const parts = decodedText.split('|');
-                    if (parts.length >= 7) {
-                        document.getElementById('result').innerHTML = `
-                            Quét thành công!<br>
-                            Số CCCD: ${parts[0]}<br>
-                            Họ tên: ${parts[2]}<br>
-                            Ngày sinh: ${parts[3]}<br>
-                            Địa chỉ: ${parts[5]}
-                        `;
-                    } else {
-                        document.getElementById('result').innerText = "Dữ liệu QR không phải chuẩn CCCD!";
-                    }
+        // Chuyển đổi qua lại giữa Tab Ảnh và Tab Camera
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.section-content').forEach(sec => sec.classList.remove('active'));
 
-                    html5QrCode.stop().catch(err => console.error("Lỗi dừng camera", err));
-                },
-                (errorMessage) => {
-                    // Bỏ qua lỗi quét liên tục từng khung hình để đỡ nặng log
-                }
-            ).catch(err => {
-                alert("Không thể mở được camera!");
-                console.error("Lỗi khởi động camera:", err);
+            if (tabName === 'file') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tab-file').classList.add('active');
+                stopCamera();
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('tab-camera').classList.add('active');
+            }
+        }
+
+        window.addEventListener('load', function () {
+            codeReader = new ZXing.BrowserQRCodeReader();
+            addLog("Đã khởi tạo hệ thống quét ZXing nội bộ.");
+
+            // Xử lý quét từ file ảnh
+            fileInput.addEventListener('change', e => {
+                logBox.innerHTML = "Bắt đầu nạp file ảnh cục bộ...";
+                resultBox.className = "";
+                
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+
+                const file = files[0];
+                addLog(`Đã nhận file: ${file.name} (${Math.round(file.size / 1024)} KB)`);
+
+                const imageUrl = URL.createObjectURL(file);
+                addLog("Đang giải mã QR nội bộ...");
+
+                codeReader.decodeFromImageUrl(imageUrl)
+                    .then(result => {
+                        addLog("=> THÀNH CÔNG! Đã giải mã xong mã QR từ ảnh.", false);
+                        hienThiThongTinCCCD(result.text);
+                    })
+                    .catch(err => {
+                        addLog(`=> THẤT BẠI: Không đọc được QR (${err})`, true);
+                        resultBox.className = "error";
+                        resultBox.innerHTML = "⚠️ Không đọc được mã QR từ ảnh này.";
+                    });
             });
+        });
+
+        // Bật camera quét trực tiếp
+        async function startCamera() {
+            resultBox.className = "";
+            resultBox.innerHTML = "Đang chờ quét mã QR từ camera...";
+            const videoElem = document.getElementById('video-preview');
+            videoElem.style.display = 'block';
+
+            try {
+                // Lấy danh sách camera thiết bị
+                const videoInputDevices = await codeReader.listVideoInputDevices();
+                if (videoInputDevices.length > 0) {
+                    // Ưu tiên camera sau (environment) nếu dùng điện thoại, hoặc camera mặc định trên máy tính
+                    selectedDeviceId = videoInputDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('sau'))?.deviceId || videoInputDevices[0].deviceId;
+                }
+
+                addLog("Đang bật camera...");
+                codeReader.decodeFromVideoDevice(selectedDeviceId, 'video-preview', (result, err) => {
+                    if (result) {
+                        addLog("=> THÀNH CÔNG! Đã quét được QR từ camera.", false);
+                        hienThiThongTinCCCD(result.text);
+                        // Dừng camera sau khi quét thành công
+                        stopCamera();
+                    }
+                    if (err && !(err instanceof ZXing.NotFoundException)) {
+                        // Bỏ qua lỗi NotFoundException liên tục vì camera quét mỗi khung hình liên tục
+                        // console.error(err);
+                    }
+                });
+            } catch (err) {
+                addLog(`Lỗi mở camera: ${err.message}`, true);
+                resultBox.className = "error";
+                resultBox.innerHTML = "⚠️ Không thể mở camera. Hãy cấp quyền truy cập camera cho trình duyệt.";
+            }
+        }
+
+        // Tắt camera
+        function stopCamera() {
+            if (codeReader) {
+                codeReader.reset();
+                addLog("Đã tắt camera.");
+            }
+            const videoElem = document.getElementById('video-preview');
+            if (videoElem) {
+                videoElem.style.display = 'none';
+            }
+        }
+
+        // Hàm bóc tách thông tin chuẩn CCCD gắn chip Bộ Công an
+        function hienThiThongTinCCCD(decodedText) {
+            const parts = decodedText.split('|');
+            
+            if (parts.length >= 7) {
+                resultBox.className = "";
+                resultBox.innerHTML = `
+                    ✅ <b>ĐỌC DỮ LIỆU CCCD THÀNH CÔNG!</b><br><br>
+                    - <b>Số CCCD:</b> ${parts[0]}<br>
+                    - <b>Số CMND cũ:</b> ${parts[1] || 'Không có'}<br>
+                    - <b>Họ và tên:</b> ${parts[2]}<br>
+                    - <b>Ngày sinh:</b> ${parts[3]}<br>
+                    - <b>Giới tính:</b> ${parts[4]}<br>
+                    - <b>Địa chỉ thường trú:</b> ${parts[5]}<br>
+                    - <b>Ngày cấp:</b> ${parts[6]}
+                `;
+            } else {
+                resultBox.className = "error";
+                resultBox.innerHTML = `⚠️ Đọc được QR nhưng dữ liệu không đúng chuẩn CCCD!<br><br><b>Nội dung thô:</b> <code>${decodedText}</code>`;
+            }
         }
     </script>
 

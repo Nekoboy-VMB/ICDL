@@ -7,11 +7,18 @@ body {
     color: #000;
     min-height: 100vh;
     /* Đảm bảo chiều cao nền tối thiểu bằng toàn bộ màn hình */
+    overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
 .container {
-    width: 100vh;
-    max-width: 100vh;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
     background: #fff;
     padding: 30px;
@@ -21,48 +28,7 @@ body {
     min-height: 100vh;
     /* Giúp form kéo dài phủ kín trang trên mobile */
 }
-/* --- TỐI ƯU GIAO DIỆN TRÊN ĐIỆN THOẠI (RESPONSIVE) --- */
-/* --- TỐI ƯU GIAO DIỆN & RESPONSIVE TRÊN ĐIỆN THOẠI --- */
-@media screen and (max-width: 850px) {
-    /* Đảm bảo toàn bộ trang không bị tràn ngang */
-    body, html {
-        overflow-x: hidden !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
 
-    .container, .step-container {
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 10px !important;
-        box-sizing: border-box !important;
-    }
-
-    /* Ép khung xem trước A4 co giãn tự động theo đúng chiều rộng màn hình điện thoại */
-    #pdf-preview-box {
-        width: 100% !important;
-        max-width: 100% !important;
-        min-height: auto !important;
-        height: auto !important;
-        /* Điều chỉnh lề cân đối trên di động: Trên/Dưới 20px, Trải/Phải 15px */
-        padding: 20px 15px 20px 25px !important; 
-        box-sizing: border-box !important;
-        margin: 0 auto !important;
-        transform: none !important;
-    }
-
-    /* Thu nhỏ các thành phần bên trong cho khỏi bị tràn chữ trên mobile */
-    #pdf-preview-box .pdf-main-title {
-        font-size: 16px !important;
-    }
-    
-    #pdf-preview-box .pdf-row-2col {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 4px !important;
-    }
-}
 /* Khung công cụ nhập liệu ban đầu */
 .admin-toolbar {
     background: #f8f9fa;
@@ -128,6 +94,13 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     font-family: Arial, sans-serif;
+}
+
+.input-form-grid input,
+.input-form-grid select,
+.input-form-grid button,
+.btn-submit {
+    max-width: 100%;
 }
 
 .form-group {
@@ -215,9 +188,9 @@ body {
     box-sizing: border-box !important;
     
     /* Thiết lập chuẩn lề văn thư: Trên 2cm (~75px), Phải 2cm (~75px), Dưới 2cm (~75px), Trái 3cm (~113px) */
-    padding: 75px 75px 75px 113px !important; 
+    padding: 75px 75px 75px 65px !important; 
     
-    margin: 0 auto;
+    margin: 0 auto !important;
     background: white;
     box-shadow: 0 0 15px rgba(0,0,0,0.15);
 }
@@ -254,10 +227,16 @@ body {
         background: #fff;
     }
     #pdf-preview-box {
-        width: 100% !important;
-        box-shadow: none !important;
-        border: none !important;
-        padding: 75px 75px 75px 113px !important; /* Giữ chuẩn lề văn thư khi xuất */
+        width: 794px !important;       /* Chiều rộng chuẩn A4 (96 DPI) */
+    min-height: 1122px !important; /* Chiều cao chuẩn A4 */
+    box-sizing: border-box !important;
+    
+    /* Thiết lập chuẩn lề văn thư: Trên 2cm (~75px), Phải 2cm (~75px), Dưới 2cm (~75px), Trái 3cm (~113px) */
+    padding: 75px 75px 75px 65px !important; 
+    
+    margin: 0 auto !important;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.15);
     }
     
     /* Ẩn hộp hướng dẫn màu xanh lá và cụm nút bấm bên dưới */
@@ -490,4 +469,143 @@ body {
     overflow-y: auto;
     font-size: 11px;
     margin-top: 10px;
+}
+
+@media screen and (max-width: 820px) {
+    body {
+        background: #fff;
+    }
+
+    .container {
+        padding: 15px;
+    }
+
+    .admin-toolbar {
+        padding: 12px;
+    }
+
+    .pdf-header-top {
+        gap: 10px;
+    }
+
+    #step-2 > div:first-child {
+        align-items: flex-start !important;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    #step-2 > div:nth-of-type(2) {
+        flex-wrap: wrap;
+    }
+
+    #step-2 > div:nth-of-type(2) > label,
+    #step-2 > div:nth-of-type(2) > button {
+        flex: 1 1 220px !important;
+        min-width: 0;
+    }
+
+    #camera-popup > div {
+        width: min(300px, calc(100vw - 32px)) !important;
+        padding: 15px !important;
+    }
+
+    #video-preview {
+        width: min(260px, calc(100vw - 64px)) !important;
+        height: min(260px, calc(100vw - 64px)) !important;
+    }
+
+    #pdf-preview-box {
+        width: calc(100vw - 30px) !important;
+        min-height: 0 !important;
+        padding: 30px 20px !important;
+    }
+
+    #pdf-preview-box .pdf-info-container {
+        grid-template-columns: minmax(0, 1fr) 85px;
+        gap: 10px;
+    }
+
+    #pdf-preview-box .pdf-row-2col {
+        gap: 8px;
+    }
+
+    #pdf-preview-box .pdf-item label,
+    #pdf-preview-box .pdf-row-full label {
+        width: 82px;
+    }
+
+    #pdf-preview-box .action-buttons-box {
+        flex-wrap: wrap;
+    }
+
+    #pdf-preview-box .action-buttons-box button {
+        flex: 1 1 220px;
+    }
+}
+
+@media screen and (max-width: 560px) {
+    .input-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.full {
+        grid-column: span 1;
+    }
+
+    .module-checkbox-grid,
+    #pdf-preview-box .pdf-row-2col,
+    #pdf-preview-box .pdf-footer {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-banner {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    #pdf-preview-box {
+        padding: 20px 12px !important;
+    }
+
+    #pdf-preview-box .pdf-header-top {
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+    }
+
+    #pdf-preview-box .pdf-main-title {
+        padding: 0 4px;
+    }
+
+    #pdf-preview-box .pdf-main-title h3 {
+        font-size: 13px;
+    }
+
+    #pdf-preview-box .pdf-main-title h4 {
+        font-size: 12px;
+    }
+
+    #pdf-preview-box .pdf-info-container {
+        grid-template-columns: 1fr;
+    }
+
+    #pdf-preview-box .pdf-info-container > div:last-child {
+        justify-self: center;
+    }
+
+    #pdf-preview-box .pdf-modules-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #pdf-preview-box .pdf-module-col-left {
+        padding-right: 0;
+        border-right: 0;
+        border-bottom: 1px solid #000;
+        padding-bottom: 6px;
+    }
+
+    #pdf-preview-box .pdf-module-col-right {
+        padding-left: 0;
+        padding-top: 6px;
+    }
 }

@@ -609,3 +609,42 @@ body {
         padding-top: 6px;
     }
 }
+
+/* Giữ bố cục A4 đầy đủ khi html2pdf render trên màn hình nhỏ */
+body.pdf-export-mode #pdf-preview-box {
+    width: 794px !important;
+    min-height: 1122px !important;
+    padding: 75px 75px 75px 65px !important;
+}
+
+body.pdf-export-mode #pdf-preview-box .pdf-info-container {
+    grid-template-columns: 1fr 110px !important;
+    gap: 20px !important;
+}
+
+body.pdf-export-mode #pdf-preview-box .pdf-row-2col,
+body.pdf-export-mode #pdf-preview-box .pdf-footer,
+body.pdf-export-mode #pdf-preview-box .pdf-modules-grid {
+    grid-template-columns: 1fr 1fr !important;
+}
+
+body.pdf-export-mode #pdf-preview-box .pdf-item label,
+body.pdf-export-mode #pdf-preview-box .pdf-row-full label {
+    width: 100px !important;
+}
+
+body.pdf-export-mode #pdf-preview-box .pdf-info-container > div:last-child {
+    justify-self: auto !important;
+}
+
+body.pdf-export-mode #pdf-preview-box .pdf-module-col-left {
+    padding-right: 15px !important;
+    border-right: 1px solid #000 !important;
+    border-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+body.pdf-export-mode #pdf-preview-box .pdf-module-col-right {
+    padding-left: 15px !important;
+    padding-top: 0 !important;
+}

@@ -442,10 +442,19 @@ document.addEventListener('change', function(e) {
 });
 function hoanTatVaTaiVe() {
     const element = document.getElementById('pdf-preview-box');
+    const restorePreview = () => document.body.classList.remove('pdf-export-mode');
+
+    // Tạm thời khôi phục bố cục A4 hai cột để html2pdf không lấy CSS mobile.
+    document.body.classList.add('pdf-export-mode');
     
     // 1. Ẩn tạm thời hộp hướng dẫn và các nút bấm đi trước khi chụp
     const noticeBox = element.querySelector('div[style*="background-color: #e2f0cb"]');
     const actionButtons = element.querySelector('.action-buttons-box');
+    const restoreWebUI = () => {
+        if (noticeBox) noticeBox.style.display = 'block';
+        if (actionButtons) actionButtons.style.display = 'flex';
+        restorePreview();
+    };
     
     if (noticeBox) noticeBox.style.display = 'none';
     if (actionButtons) actionButtons.style.display = 'none';
@@ -476,13 +485,11 @@ function hoanTatVaTaiVe() {
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
+        restoreWebUI();
+    }, function(error) {
+        restoreWebUI();
+        console.error('Không thể tạo file PDF:', error);
     });
-
-    // 4. Sau 1.5 giây, hiện lại các nút bấm trên giao diện web
-    setTimeout(function() {
-        if (noticeBox) noticeBox.style.display = 'block';
-        if (actionButtons) actionButtons.style.display = 'flex';
-    }, 1500);
 }
 
 

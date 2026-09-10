@@ -1,0 +1,452 @@
+body {
+    font-family: "Times New Roman", Times, serif;
+    background: #525659;
+    margin: 0;
+    padding: 0;
+    /* Cho padding về 0 để nền xám phủ kín sát mép màn hình */
+    color: #000;
+    min-height: 100vh;
+    /* Đảm bảo chiều cao nền tối thiểu bằng toàn bộ màn hình */
+}
+
+.container {
+    width: 100vh;
+    max-width: 100vh;
+    margin: 0 auto;
+    background: #fff;
+    padding: 30px;
+    /* Đệm bên trong vừa phải cho điện thoại */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    min-height: 100vh;
+    /* Giúp form kéo dài phủ kín trang trên mobile */
+}
+
+/* Khung công cụ nhập liệu ban đầu */
+.admin-toolbar {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+    border: 1px solid #ddd;
+    font-family: Arial, sans-serif;
+}
+
+.tab-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    padding: 6px 12px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.tab-btn.active {
+    background: #002d62;
+    color: white;
+    border-color: #002d62;
+}
+
+.section-content {
+    display: none;
+}
+
+.section-content.active {
+    display: block;
+}
+
+#video-preview {
+    display: none;
+    /* Mặc định ẩn đi */
+    width: 260px !important;
+    /* Cố định chiều rộng thành hình vuông */
+    height: 260px !important;
+    /* Cố định chiều cao thành hình vuông */
+    object-fit: cover !important;
+    /* Tránh bị méo hình ảnh camera */
+    border-radius: 12px;
+    /* Bo góc mềm mại, hiện đại */
+    border: 3px solid #007bff;
+    /* Viền xanh tạo khung quét nổi bật */
+    background: #000;
+
+    /* Đưa ra giữa màn hình hoặc đặt gọn gàng ngay dưới nút bấm */
+    margin: 10px auto;
+    display: block;
+}
+
+.input-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    font-family: Arial, sans-serif;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full {
+    grid-column: span 2;
+}
+
+.input-form-grid label {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.input-form-grid input {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.input-form-grid input[readonly] {
+    background-color: #e9ecef;
+}
+
+.module-checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 15px;
+    background: #fff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.module-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.pricing-banner {
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    padding: 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+.btn-submit {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background: #002d62;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+
+.btn-submit:hover {
+    background: #001f3f;
+}
+
+/* Giao diện Mẫu Đơn Chuẩn Biểu mẫu 01 */
+/* --- CỐ ĐỊNH KHUNG XEM TRƯỚC CHUẨN A4 --- */
+/* --- CỐ ĐỊNH KHUNG XEM TRƯỚC VÀ CHUẨN LỀ VĂN THƯ A4 --- */
+#pdf-preview-box {
+    width: 794px !important;       /* Chiều rộng chuẩn A4 (96 DPI) */
+    min-height: 1122px !important; /* Chiều cao chuẩn A4 */
+    box-sizing: border-box !important;
+    
+    /* Thiết lập chuẩn lề văn thư: Trên 2cm (~75px), Phải 2cm (~75px), Dưới 2cm (~75px), Trái 3cm (~113px) */
+    padding: 75px 75px 75px 113px !important; 
+    
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.15);
+}
+
+/* Thu nhỏ khoảng cách các thành phần bên trong để không bị đẩy dòng */
+#pdf-preview-box .pdf-main-title {
+    margin-bottom: 2px !important;
+}
+
+#pdf-preview-box .pdf-row-full, 
+#pdf-preview-box .pdf-row-2col {
+    margin-bottom: 3px !important;
+}
+
+#pdf-preview-box .pdf-avatar-frame {
+    width: 85px !important;  
+    height: 110px !important;
+}
+
+#pdf-preview-box p {
+    font-size: 11px !important; 
+    margin-top: 5px !important;
+    line-height: 1.3 !important;
+}
+
+#pdf-preview-box .pdf-footer {
+    margin-top: 5px !important;
+}
+
+/* --- ẨN HOÀN TOÀN PHẦN HƯỚNG DẪN VÀ NÚT BẤM KHI XUẤT FILE --- */
+@media print {
+    body {
+        margin: 0;
+        background: #fff;
+    }
+    #pdf-preview-box {
+        width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 75px 75px 75px 113px !important; /* Giữ chuẩn lề văn thư khi xuất */
+    }
+    
+    /* Ẩn hộp hướng dẫn màu xanh lá và cụm nút bấm bên dưới */
+    #pdf-preview-box > div[style*="background-color: #e2f0cb"],
+    .action-buttons-box {
+        display: none !important;
+    }
+}
+/* Header có 2 logo và tiêu đề 2 dòng căn giữa đúng chuẩn */
+.pdf-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 12px;
+    margin-bottom: 22px;
+}
+
+.logo-box {
+    width: 75px;
+    height: 45px;
+    border: 1px dashed #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #666;
+    text-align: center;
+    background: #fdfdfd;
+    overflow: hidden;
+}
+
+.logo-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Định vị tiêu đề nằm thấp xuống 2/3 ảnh thẻ */
+.pdf-main-title {
+    text-align: center;
+    flex-grow: 1;
+    padding: 0 10px;
+    padding-top: 15px;
+}
+
+.pdf-main-title h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.pdf-main-title h4 {
+    margin: 3px 0 0 0;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+/* Bố cục thông tin thí sinh 2 cột + Ảnh thẻ bên phải */
+.pdf-info-container {
+    display: grid;
+    grid-template-columns: 1fr 110px;
+    gap: 20px;
+    align-items: start;
+    margin-top: 10px;
+}
+
+.pdf-info-left {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.pdf-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    font-size: 13px;
+    align-items: flex-end;
+}
+
+.pdf-item {
+    display: flex;
+    font-size: 13px;
+    align-items: flex-end;
+    margin-top: 7px;
+}
+
+.pdf-item label {
+    width: 100px;
+    font-weight: normal;
+    flex-shrink: 0;
+    font-size: 12px;
+}
+
+.pdf-item span {
+    flex-grow: 1;
+    padding-left: 5px;
+    font-weight: bold;
+    color: #000;
+    min-height: 18px;
+    font-size: 12px;
+}
+
+.pdf-row-full {
+    display: flex;
+    font-size: 13px;
+    align-items: flex-end;
+    margin-top: 7px;
+}
+
+.pdf-row-full label {
+    width: 100px;
+    font-weight: normal;
+    flex-shrink: 0;
+    font-size: 12px;
+}
+
+.pdf-row-full span {
+    flex-grow: 1;
+    padding-left: 5px;
+    font-weight: bold;
+    color: #000;
+    min-height: 18px;
+    font-size: 12px;
+}
+
+.pdf-avatar-frame {
+    width: 100px;
+    height: 125px;
+    border: 1px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9f9f9;
+    text-align: center;
+    font-size: 11px;
+    color: #777;
+    overflow: hidden;
+}
+
+.pdf-avatar-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Danh sách module 2 cột có đường kẻ giữa */
+.pdf-modules-wrapper {
+    margin-top: 12px;
+    padding: 5px 0;
+}
+
+.pdf-modules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    font-size: 12px;
+}
+
+.pdf-module-col-left {
+    padding-right: 15px;
+    border-right: 1px solid #000;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pdf-module-col-right {
+    padding-left: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Khu vực ký tên */
+.pdf-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 25px;
+    font-size: 12px;
+}
+
+.pdf-sig-box {
+    text-align: center;
+}
+
+.action-buttons-box {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.btn-action-primary {
+    flex: 2;
+    padding: 10px;
+    background: #ea4335;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-action-secondary {
+    flex: 1;
+    padding: 10px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#debug-log {
+    background: #1e1e1e;
+    color: #00ff00;
+    padding: 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    height: 50px;
+    overflow-y: auto;
+    font-size: 11px;
+    margin-top: 10px;
+}

@@ -473,18 +473,8 @@ function hoanTatVaTaiVe() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
     };
 
-    // 3. Sử dụng outputPdf để tạo file tương thích tốt nhất trên di động
-    html2pdf().from(element).set(opt).outputPdf('blob').then(function(pdfBlob) {
-        // Tạo đường dẫn ảo để kích hoạt tải file trên điện thoại
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        const downloadLink = document.createElement('a');
-        downloadLink.href = blobUrl;
-        downloadLink.download = 'Phieu_Dang_Ky_ICDL.pdf';
-        
-        // Thêm vào DOM, bấm tự động rồi xóa đi
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+    // 3. Dùng cơ chế save() của html2pdf để trình duyệt mobile tải file trực tiếp.
+    html2pdf().from(element).set(opt).save().then(function() {
         restoreWebUI();
     }, function(error) {
         restoreWebUI();

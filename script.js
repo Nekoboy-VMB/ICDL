@@ -443,20 +443,20 @@ document.addEventListener('change', function(e) {
 function hoanTatVaTaiVe() {
     const element = document.getElementById('pdf-preview-box');
     
-    // 1. Tìm và ẩn tạm thời hộp hướng dẫn và các nút bấm đi trước khi chụp
+    // 1. Ẩn tạm thời hộp hướng dẫn và các nút bấm đi trước khi chụp
     const noticeBox = element.querySelector('div[style*="background-color: #e2f0cb"]');
     const actionButtons = element.querySelector('.action-buttons-box');
     
     if (noticeBox) noticeBox.style.display = 'none';
     if (actionButtons) actionButtons.style.display = 'none';
 
-    // 2. Cấu hình xuất file PDF
+    // 2. Cấu hình xuất file
     const opt = {
         margin:       [0, 0, 0, 0], 
         filename:     'Phieu_Dang_Ky_ICDL.pdf',
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { 
-            scale: 1.6,       
+            scale: 1.5, // Giảm scale nhẹ (1.5) giúp điện thoại render nhanh và không bị tràn bộ nhớ
             useCORS: true,
             letterRendering: true,
             scrollY: 0
@@ -464,15 +464,26 @@ function hoanTatVaTaiVe() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
     };
 
-    // 3. Tiến hành gọi lệnh tải file PDF
-    html2pdf().from(element).set(opt).save();
+    // 3. Sử dụng outputPdf để tạo file tương thích tốt nhất trên di động
+    html2pdf().from(element).set(opt).outputPdf('blob').then(function(pdfBlob) {
+        // Tạo đường dẫn ảo để kích hoạt tải file trên điện thoại
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = blobUrl;
+        downloadLink.download = 'Phieu_Dang_Ky_ICDL.pdf';
+        
+        // Thêm vào DOM, bấm tự động rồi xóa đi
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    });
 
-    // 4. Sau 1.5 giây, tự động hiện lại các nút bấm trên giao diện web cho người dùng
+    // 4. Sau 1.5 giây, hiện lại các nút bấm trên giao diện web
     setTimeout(function() {
         if (noticeBox) noticeBox.style.display = 'block';
         if (actionButtons) actionButtons.style.display = 'flex';
     }, 1500);
-} // <--- Thiế
+}
 
 
     // 2. Lấy link Gmail đã được tạo sẵn từ trước (hoặc tạo trực tiếp link mailto / URL gửi mail của bạn)

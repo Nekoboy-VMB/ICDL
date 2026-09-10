@@ -21,7 +21,48 @@ body {
     min-height: 100vh;
     /* Giúp form kéo dài phủ kín trang trên mobile */
 }
+/* --- TỐI ƯU GIAO DIỆN TRÊN ĐIỆN THOẠI (RESPONSIVE) --- */
+/* --- TỐI ƯU GIAO DIỆN & RESPONSIVE TRÊN ĐIỆN THOẠI --- */
+@media screen and (max-width: 850px) {
+    /* Đảm bảo toàn bộ trang không bị tràn ngang */
+    body, html {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 
+    .container, .step-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Ép khung xem trước A4 co giãn tự động theo đúng chiều rộng màn hình điện thoại */
+    #pdf-preview-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        height: auto !important;
+        /* Điều chỉnh lề cân đối trên di động: Trên/Dưới 20px, Trải/Phải 15px */
+        padding: 20px 15px 20px 25px !important; 
+        box-sizing: border-box !important;
+        margin: 0 auto !important;
+        transform: none !important;
+    }
+
+    /* Thu nhỏ các thành phần bên trong cho khỏi bị tràn chữ trên mobile */
+    #pdf-preview-box .pdf-main-title {
+        font-size: 16px !important;
+    }
+    
+    #pdf-preview-box .pdf-row-2col {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+}
 /* Khung công cụ nhập liệu ban đầu */
 .admin-toolbar {
     background: #f8f9fa;

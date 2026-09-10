@@ -1,6 +1,7 @@
 
 const logBox = document.getElementById('debug-log');
 const fileInput = document.getElementById('qr-input');
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyxX0_wmnBeZtDnUjm3HeVxwaTWfJ9-334mcbLQSGL4qeNIR9c7HJo-eyI-L3_uB-2N-Q/exec';
 let codeReader = null;
 let selectedDeviceId = null;
 let base64Avatar = "";
@@ -440,7 +441,7 @@ document.addEventListener('change', function(e) {
         tinhToanHocPhi();
     }
 });
-function hoanTatVaTaiVe() {
+async function hoanTatVaTaiVe() {
     const element = document.getElementById('pdf-preview-box');
     const restorePreview = () => document.body.classList.remove('pdf-export-mode');
 
@@ -473,12 +474,71 @@ function hoanTatVaTaiVe() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
     };
 
-    // 3. Dùng cơ chế save() của html2pdf để trình duyệt mobile tải file trực tiếp.
-    html2pdf().from(element).set(opt).save().then(function() {
+    try {
+        if (BACKEND_URL.includes('PASTE_')) {
+            throw new Error('Chưa cấu hình URL Google Apps Script Web App trong script.js.');
+        }
+
+        const pdfBlob = await html2pdf().from(element).set(opt).outputPdf('blob');
+        const pdfBase64 = await blobToBase64(pdfBlob);
+        const name = `${document.getElementById('lastname').value} ${document.getElementById('firstname').value}`.trim();
+        const selectedModules = Array.from(document.querySelectorAll('input[name="modules"]:checked'))
+            .map(input => keywords[input.value].en);
+        const amount = document.getElementById('total-price').innerText.replace(/[^0-9]/g, '');
+        const transferNote = `${name} - ${document.getElementById('phone').value} - ICDL`.toUpperCase();
+        const qrUrl = `https://img.vietqr.io/image/MB-1973033338-compact2.jpg?amount=${amount}&addInfo=${encodeURIComponent(transferNote)}`;
+        const email = document.getElementById('email').value;
+        const record = {
+            cccd: document.getElementById('cccd').value,
+            name,
+            phone: document.getElementById('phone').value,
+            email,
+            job: document.getElementById('job').value,
+            dob: document.getElementById('dob').value,
+            gender: document.getElementById('gender').value,
+            address: document.getElementById('address').value,
+            region: document.getElementById('display-region').innerText,
+            modules: selectedModules,
+            total: document.getElementById('total-price').innerText
+        };
+        const emailHtml = `<p>Chào bạn ${name},</p><p>Hồ sơ đăng ký dự thi ICDL của bạn đã được ghi nhận.</p><p><b>Module dự thi:</b> ${selectedModules.join(', ')}</p><p><b>Tổng học phí:</b> ${record.total}</p><p><b>Thanh toán:</b> MB Bank - STK 1973033338 - Công ty Cổ phần Đầu tư Phát triển Sách và Học liệu Điện tử Việt Nam</p><p><b>Nội dung chuyển khoản:</b> ${transferNote}</p><p><img src="${qrUrl}" alt="QR thanh toán" style="max-width:300px"></p><p>Phiếu đăng ký được đính kèm email này.</p>`;
+
+        const response = await fetch(BACKEND_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                fileName: 'Phieu_Dang_Ky_ICDL.pdf',
+                pdfBase64,
+                record,
+                emailHtml
+            })
+        });
+        const result = await response.json();
+        if (!result.ok) throw new Error(result.error || 'Backend không lưu được hồ sơ.');
+
+        const downloadUrl = URL.createObjectURL(pdfBlob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl;
+        downloadLink.download = 'Phieu_Dang_Ky_ICDL.pdf';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        alert('Đã gửi email xác nhận, lưu hồ sơ và tải phiếu đăng ký.');
+    } catch (error) {
+        console.error('Không thể hoàn tất đăng ký:', error);
+        alert(`Chưa thể hoàn tất đăng ký: ${error.message}`);
+    } finally {
         restoreWebUI();
-    }, function(error) {
-        restoreWebUI();
-        console.error('Không thể tạo file PDF:', error);
+    }
+}
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
     });
 }
 
